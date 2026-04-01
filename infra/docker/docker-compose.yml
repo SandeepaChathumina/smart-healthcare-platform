@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo
+    container_name: mongo
+    ports:
+      - "27017:27017"
+
+  auth-service:
+    build: ../../services/auth-service
+    ports:
+      - "5001:5001"
+    depends_on:
+      - mongo
+
+  patient-service:
+    build: ../../services/patient-service
+    ports:
+      - "5002:5002"
+    depends_on:
+      - mongo
+
+  doctor-service:
+    build: ../../services/doctor-service
+    ports:
+      - "5003:5003"
+    depends_on:
+      - mongo
+
+  appointment-service:
+    build: ../../services/appointment-service
+    ports:
+      - "5004:5004"
+    depends_on:
+      - mongo
+
+  frontend:
+    build: ../../frontend
+    ports:
+      - "3000:3000"
