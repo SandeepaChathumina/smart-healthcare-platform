@@ -5,6 +5,7 @@ import cors from "cors";
 
 import appointmentRoutes from "./routes/appointmentRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import telemedicineSessionRoutes from "./routes/telemedicineSessionRoutes.js";
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/telemedicine-sessions", telemedicineSessionRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI)
