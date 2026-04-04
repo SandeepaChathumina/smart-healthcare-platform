@@ -2,50 +2,59 @@ const mongoose = require("mongoose");
 
 const NotificationSchema = new mongoose.Schema(
   {
-    appointmentId: {
-      type: String,
-      required: true,
-    },
     eventType: {
       type: String,
-      required: true,
-      enum: [
-        "APPOINTMENT_BOOKED",
-        "APPOINTMENT_ACCEPTED",
-        "APPOINTMENT_REJECTED",
-        "APPOINTMENT_RESCHEDULED",
-        "CONSULTATION_COMPLETED",
-        "PAYMENT_SUCCESS",
-        "PAYMENT_FAILED",
-      ],
+      default: "CUSTOM",
     },
+
+    senderId: {
+      type: String,
+      default: null,
+    },
+    senderRole: {
+      type: String,
+      default: null,
+    },
+    senderName: {
+      type: String,
+      default: null,
+    },
+
     recipientId: {
       type: String,
       required: true,
     },
     recipientRole: {
       type: String,
-      enum: ["Patient", "Doctor", "Admin"],
-      required: true,
+      default: null,
     },
     recipientName: {
       type: String,
+      default: null,
     },
+
     email: {
       type: String,
+      default: null,
     },
     phone: {
       type: String,
+      default: null,
     },
+
     emailSubject: {
       type: String,
+      default: null,
     },
     emailMessage: {
       type: String,
+      default: null,
     },
     smsMessage: {
       type: String,
+      default: null,
     },
+
     emailStatus: {
       type: String,
       enum: ["pending", "sent", "failed", "skipped"],
@@ -56,10 +65,17 @@ const NotificationSchema = new mongoose.Schema(
       enum: ["pending", "sent", "failed", "skipped"],
       default: "pending",
     },
+
     errorMessage: {
       type: String,
       default: null,
     },
+
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+
     sentAt: {
       type: Date,
       default: Date.now,

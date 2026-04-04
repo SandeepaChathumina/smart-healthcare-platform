@@ -4,41 +4,55 @@ const sendSMS = require("../services/smsService");
 const { getUserContactsByIds } = require("../services/authService");
 const { buildMessages } = require("../utils/messageTemplates");
 
-const sendAppointmentNotifications = async (req, res) => {
+const sendNotifications = async (req, res) => {
   try {
     const {
-      appointmentId,
-      eventType,
-      patientId,
-      doctorId,
-      appointmentType,
-      scheduledDateTime,
+      senderId = null,
+      senderRole = null,
+      senderName = null,
+      receiverIds,
+      eventType = "CUSTOM",
+      metadata = {},
     } = req.body;
 
-    if (!appointmentId || !eventType || !patientId || !doctorId) {
+    if (!Array.isArray(receiverIds) || receiverIds.length === 0) {
       return res.status(400).json({
-        message: "appointmentId, eventType, patientId and doctorId are required",
+        message: "receiverIds must be a non-empty array",
       });
     }
 
-    const contactResponse = await getUserContactsByIds([patientId, doctorId]);
+    const uniqueIds = [...new Set([...receiverIds, ...(senderId ? [senderId] : [])])];
+
+    const contactResponse = await getUserContactsByIds(uniqueIds);
     const contacts = contactResponse.contacts || [];
 
     if (!contacts.length) {
       return res.status(404).json({
-        message: "No recipient contacts found from auth service",
+        message: "No user contacts found from auth service",
+      });
+    }
+
+    const senderContact = senderId
+      ? contacts.find((user) => String(user.id) === String(senderId))
+      : null;
+
+    const receiverContacts = contacts.filter((user) =>
+      receiverIds.map(String).includes(String(user.id))
+    );
+
+    if (!receiverContacts.length) {
+      return res.status(404).json({
+        message: "No receiver contacts found from auth service",
       });
     }
 
     const results = [];
 
-    for (const contact of contacts) {
+    for (const contact of receiverContacts) {
       const { emailSubject, emailMessage, smsMessage } = buildMessages({
         eventType,
         recipientName: contact.fullName,
-        appointmentId,
-        appointmentType,
-        scheduledDateTime,
+        metadata,
       });
 
       let emailStatus = "skipped";
@@ -75,19 +89,27 @@ const sendAppointmentNotifications = async (req, res) => {
       }
 
       const log = await Notification.create({
-        appointmentId,
         eventType,
+
+        senderId: senderContact ? senderContact.id : senderId,
+        senderRole: senderContact ? senderContact.role : senderRole,
+        senderName: senderContact ? senderContact.fullName : senderName,
+
         recipientId: contact.id,
-        recipientRole: contact.role,
-        recipientName: contact.fullName,
-        email: contact.email,
-        phone: contact.phone,
+        recipientRole: contact.role || null,
+        recipientName: contact.fullName || null,
+
+        email: contact.email || null,
+        phone: contact.phone || null,
+
         emailSubject,
         emailMessage,
         smsMessage,
+
         emailStatus,
         smsStatus,
         errorMessage,
+        metadata,
       });
 
       results.push(log);
@@ -95,7 +117,7 @@ const sendAppointmentNotifications = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Notifications processed",
+      message: "Notifications processed successfully",
       count: results.length,
       notifications: results,
     });
@@ -153,7 +175,7 @@ const sendTestEmail = async (req, res) => {
 };
 
 module.exports = {
-  sendAppointmentNotifications,
+  sendNotifications,
   getAllNotifications,
   sendTestEmail,
 };

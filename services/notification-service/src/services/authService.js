@@ -2,7 +2,7 @@ const axios = require("axios");
 
 const getUserContactsByIds = async (userIds = []) => {
   const response = await axios.post(
-    `${process.env.AUTH_SERVICE_URL}/internal/users/contacts`,
+    `${process.env.AUTH_SERVICE_URL}/auth/internal/users/contacts`,
     { userIds },
     {
       headers: {
