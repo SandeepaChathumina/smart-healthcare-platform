@@ -671,3 +671,48 @@ export const logout = async (req, res) => {
     });
   }
 };
+
+export const getUserContactsInternal = async (req, res) => {
+  try {
+    const internalApiKey = req.headers['x-internal-api-key'];
+
+    if (!internalApiKey || internalApiKey !== process.env.INTERNAL_SERVICE_API_KEY) {
+      return res.status(403).json({
+        message: 'Forbidden: invalid internal service key'
+      });
+    }
+
+    const { userIds } = req.body;
+
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({
+        message: 'userIds must be a non-empty array'
+      });
+    }
+
+    const users = await User.find({ _id: { $in: userIds } }).select(
+      '_id fullName email phone role accountStatus isVerified'
+    );
+
+    const contacts = users.map((user) => ({
+      id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      accountStatus: user.accountStatus,
+      isVerified: user.isVerified
+    }));
+
+    return res.status(200).json({
+      success: true,
+      count: contacts.length,
+      contacts
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};

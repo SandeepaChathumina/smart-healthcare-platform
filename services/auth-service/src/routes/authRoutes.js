@@ -9,7 +9,8 @@ import {
   verifyEmail,
   forgotPassword,
   resetPassword,
-  requestDoctorVerification
+  requestDoctorVerification,
+  getUserContactsInternal
 } from '../controllers/authController.js';
 import {
   protect,
@@ -37,5 +38,7 @@ router.put(
   authorizeRoles('Doctor'),
   requestDoctorVerification
 );
+
+router.post('/internal/users/contacts', getUserContactsInternal);
 
 export default router;
