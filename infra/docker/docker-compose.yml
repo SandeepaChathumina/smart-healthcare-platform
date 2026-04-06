@@ -14,13 +14,6 @@ services:
     depends_on:
       - mongo
 
-  patient-service:
-    build: ../../services/patient-service
-    ports:
-      - "5002:5002"
-    depends_on:
-      - mongo
-
   doctor-service:
     build: ../../services/doctor-service
     ports:
@@ -39,3 +32,24 @@ services:
     build: ../../frontend
     ports:
       - "3000:3000"
+
+  patient-service:
+    build: ../../services/patient-service
+    container_name: patient-service
+    ports:
+      - "5002:5002"
+    environment:
+      - PORT=5002
+      - MONGODB_URI=mongodb://mongo:27017/smart_healthcare
+      - JWT_SECRET=${JWT_SECRET}
+      - FILE_UPLOAD_PATH=./uploads
+      - MAX_FILE_SIZE=5242880
+    depends_on:
+      - mongo
+    volumes:
+      - ../../services/patient-service:/app
+      - /app/node_modules
+      - patient_uploads:/app/uploads
+
+volumes:
+  patient_uploads:
