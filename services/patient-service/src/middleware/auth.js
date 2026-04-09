@@ -1,8 +1,4 @@
 const jwt = require('jsonwebtoken');
-const mongoose = require('mongoose');
-
-// Since we're using shared database, we can query User model directly
-const User = mongoose.model('User');
 
 const protect = async (req, res, next) => {
   let token;
@@ -15,18 +11,10 @@ const protect = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
-      // Get user from database (shared with auth-service)
-      const user = await User.findById(decoded.id).select('-password');
+      // Decoupled from DB, trust the JWT
+      // Provide minimally required info in req.user
+      req.user = { id: decoded.id, role: decoded.role };
       
-      if (!user) {
-        return res.status(401).json({ message: 'User not found' });
-      }
-      
-      if (user.accountStatus === 'suspended') {
-        return res.status(403).json({ message: 'Account is suspended' });
-      }
-      
-      req.user = user;
       next();
     } catch (error) {
       return res.status(401).json({ message: 'Not authorized, token failed' });

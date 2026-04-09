@@ -77,13 +77,13 @@ export const registerPatient = async (req, res) => {
       bloodGroup,
       allergies,
       location,
-      isVerified: false,
+      isVerified: true,
       accountStatus: 'active'
     });
 
     return res.status(201).json({
       message:
-        'Patient registered successfully. Please verify your email using OTP before login.',
+        'Patient registered successfully.',
       user: sanitizeUser(newPatient)
     });
   } catch (error) {
