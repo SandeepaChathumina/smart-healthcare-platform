@@ -27,12 +27,30 @@ app.get('/health', (req, res) => {
 });
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI, {
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
 .then(() => console.log('MongoDB connected successfully'))
 .catch(err => console.error('MongoDB connection error:', err));
+
+// Global Error Handler for cleaner API responses (especially File Uploads)
+app.use((err, req, res, next) => {
+  if (err.name === 'MulterError') {
+    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({ 
+        success: false,
+        message: `Unexpected form field. The backend expects the file key to be named 'file'. Check your Postman form-data keys.`
+      });
+    }
+    return res.status(400).json({ success: false, message: err.message });
+  }
+  
+  if (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+  next();
+});
 
 const PORT = process.env.PORT || 5002;
 app.listen(PORT, () => {

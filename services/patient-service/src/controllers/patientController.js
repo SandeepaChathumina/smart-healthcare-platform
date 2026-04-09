@@ -2,9 +2,8 @@ const PatientReport = require('../models/PatientReport');
 const MedicalHistory = require('../models/MedicalHistory');
 const mongoose = require('mongoose');
 
-// Get User model from mongoose (shared with auth-service)
-const User = mongoose.model('User');
-const Appointment = mongoose.model('Appointment');
+// Removed User model dependency to fully decouple patient service
+const Appointment = require('../models/Appointment');
 
 // ==================== REPORT HANDLING ====================
 
