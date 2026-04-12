@@ -1,5 +1,5 @@
 const express = require("express");
-const { protect } = require("../middleware/auth");
+const { protect, authorizeRoles } = require("../middleware/auth");
 const {
   createConsultationNote,
   getConsultationNoteByAppointment,
@@ -8,10 +8,8 @@ const {
 
 const router = express.Router();
 
-router.use(protect);
-
-router.post("/", createConsultationNote);
-router.get("/me", getMyConsultationNotes);
-router.get("/:appointmentId", getConsultationNoteByAppointment);
+router.post("/", protect, authorizeRoles("Doctor"), createConsultationNote);
+router.get("/me", protect, authorizeRoles("Doctor"), getMyConsultationNotes);
+router.get("/:appointmentId", protect, authorizeRoles("Doctor", "Patient"), getConsultationNoteByAppointment);
 
 module.exports = router;

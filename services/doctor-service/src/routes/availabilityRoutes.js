@@ -1,5 +1,5 @@
 const express = require("express");
-const { protect } = require("../middleware/auth");
+const { protect, authorizeRoles } = require("../middleware/auth");
 const {
   createAvailability,
   getMyAvailability,
@@ -10,12 +10,10 @@ const {
 
 const router = express.Router();
 
-router.use(protect);
-
-router.get("/me", getMyAvailability);
-router.get("/check/:doctorId", checkAvailability);
-router.post("/", createAvailability);
-router.patch("/:id", updateAvailability);
-router.delete("/:id", deleteAvailability);
+router.get("/me", protect, authorizeRoles("Doctor"), getMyAvailability);
+router.get("/check/:doctorId", protect, authorizeRoles("Patient", "Doctor", "Admin"), checkAvailability);
+router.post("/", protect, authorizeRoles("Doctor"), createAvailability);
+router.patch("/:id", protect, authorizeRoles("Doctor"), updateAvailability);
+router.delete("/:id", protect, authorizeRoles("Doctor"), deleteAvailability);
 
 module.exports = router;

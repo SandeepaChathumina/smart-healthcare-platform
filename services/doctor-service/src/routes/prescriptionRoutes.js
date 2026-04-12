@@ -1,5 +1,5 @@
 const express = require("express");
-const { protect } = require("../middleware/auth");
+const { protect, authorizeRoles } = require("../middleware/auth");
 const {
   createPrescription,
   getPrescriptionsByDoctor,
@@ -10,12 +10,10 @@ const {
 
 const router = express.Router();
 
-router.use(protect);
-
-router.post("/", createPrescription);
-router.get("/doctor/:doctorId", getPrescriptionsByDoctor);
-router.get("/patient/:patientId", getPrescriptionsByPatient);
-router.get("/:id", getPrescriptionById);
-router.patch("/:id/status", updatePrescriptionStatus);
+router.post("/", protect, authorizeRoles("Doctor"), createPrescription);
+router.get("/doctor/:doctorId", protect, authorizeRoles("Doctor", "Admin"), getPrescriptionsByDoctor);
+router.get("/patient/:patientId", protect, authorizeRoles("Patient", "Doctor", "Admin"), getPrescriptionsByPatient);
+router.get("/:id", protect, authorizeRoles("Patient", "Doctor", "Admin"), getPrescriptionById);
+router.patch("/:id/status", protect, authorizeRoles("Doctor"), updatePrescriptionStatus);
 
 module.exports = router;
