@@ -77,7 +77,7 @@ export const registerPatient = async (req, res) => {
       bloodGroup,
       allergies,
       location,
-      isVerified: true,
+      isVerified: false,
       accountStatus: 'active'
     });
 
@@ -204,7 +204,7 @@ export const registerAdmin = async (req, res) => {
       password: hashedPassword,
       phone,
       adminLevel: adminLevel || 'Admin',
-      isVerified: true,
+      isVerified: false,
       accountStatus: 'active'
     });
 

@@ -22,8 +22,11 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 app.use('/api/patient', patientRoutes);
 
 // Health check
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', service: 'patient-service' });
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Patient service is running'
+  });
 });
 
 // MongoDB connection

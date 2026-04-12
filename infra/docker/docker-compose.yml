@@ -11,6 +11,8 @@ services:
     build: ../../services/auth-service
     ports:
       - "5001:5001"
+    environment:
+      - INTERNAL_SERVICE_API_KEY=my_internal_key_123
     depends_on:
       - mongo
 
@@ -28,11 +30,6 @@ services:
     depends_on:
       - mongo
 
-  frontend:
-    build: ../../frontend
-    ports:
-      - "3000:3000"
-
   patient-service:
     build: ../../services/patient-service
     container_name: patient-service
@@ -40,7 +37,7 @@ services:
       - "5002:5002"
     environment:
       - PORT=5002
-      - MONGODB_URI=mongodb://mongo:27017/smart_healthcare
+      - MONGO_URI=mongodb://mongo:27017/smart_healthcare
       - JWT_SECRET=${JWT_SECRET}
       - FILE_UPLOAD_PATH=./uploads
       - MAX_FILE_SIZE=5242880
@@ -50,6 +47,24 @@ services:
       - ../../services/patient-service:/app
       - /app/node_modules
       - patient_uploads:/app/uploads
+
+  notification-service:
+    build: ../../services/notification-service
+    ports:
+      - "5011:5010"
+    environment:
+      - PORT=5010
+      - MONGO_URI=mongodb://mongo:27017/smart_healthcare
+      - AUTH_SERVICE_URL=http://auth-service:5001
+      - INTERNAL_SERVICE_API_KEY=my_internal_key_123
+    depends_on:
+      - mongo
+      - auth-service
+
+  frontend:
+    build: ../../frontend
+    ports:
+      - "3000:3000"
 
 volumes:
   patient_uploads:

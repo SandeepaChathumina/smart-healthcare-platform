@@ -8,15 +8,21 @@ import {
   updateAppointmentStatus,
   cancelAppointment,
 } from "../controllers/appointmentController.js";
+import { protect, authorizeRoles } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.post("/", createAppointment);
-router.get("/", getAllAppointments);
-router.get("/patient/:patientId", getAppointmentsByPatient);
-router.get("/doctor/:doctorId", getAppointmentsByDoctor);
-router.get("/:id", getAppointmentById);
-router.patch("/:id/status", updateAppointmentStatus);
-router.patch("/:id/cancel", cancelAppointment);
+router.post("/", protect, authorizeRoles("Patient"), createAppointment);
+router.get("/", protect, authorizeRoles("Admin"), getAllAppointments);
+router.get("/patient/:patientId", protect, getAppointmentsByPatient);
+router.get("/doctor/:doctorId", protect, getAppointmentsByDoctor);
+router.get("/:id", protect, getAppointmentById);
+router.patch(
+  "/:id/status",
+  protect,
+  authorizeRoles("Doctor", "Admin"),
+  updateAppointmentStatus,
+);
+router.patch("/:id/cancel", protect, cancelAppointment);
 
 export default router;

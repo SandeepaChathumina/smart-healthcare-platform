@@ -7,14 +7,15 @@ import {
   getTelemedicineSessionsByDoctor,
   updateTelemedicineSessionStatus,
 } from "../controllers/telemedicineSessionController.js";
+import { protect } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.post("/:appointmentId", createTelemedicineSession);
-router.get("/", getAllTelemedicineSessions);
-router.get("/patient/:patientId", getTelemedicineSessionsByPatient);
-router.get("/doctor/:doctorId", getTelemedicineSessionsByDoctor);
-router.patch("/:id/status", updateTelemedicineSessionStatus);
-router.get("/:id", getTelemedicineSessionById);
+router.post("/:appointmentId", protect, createTelemedicineSession);
+router.get("/", protect, getAllTelemedicineSessions);
+router.get("/patient/:patientId", protect, getTelemedicineSessionsByPatient);
+router.get("/doctor/:doctorId", protect, getTelemedicineSessionsByDoctor);
+router.patch("/:id/status", protect, updateTelemedicineSessionStatus);
+router.get("/:id", protect, getTelemedicineSessionById);
 
 export default router;

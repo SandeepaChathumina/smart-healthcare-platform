@@ -6,7 +6,7 @@ const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 export const createAppointment = async (req, res) => {
   try {
     const {
-      patientId,
+      // patientId,
       doctorId,
       appointmentType,
       reason,
@@ -16,6 +16,15 @@ export const createAppointment = async (req, res) => {
       patientNotes,
       uploadedReportIds,
     } = req.body;
+
+    const patientId = req.user?.id || req.user?._id || req.user?.userId;
+    console.log("req.user =", req.user);
+
+    if (req.user.role !== "Patient") {
+      return res
+        .status(403)
+        .json({ message: "Only patients can create appointments" });
+    }
 
     if (
       !patientId ||
@@ -27,7 +36,7 @@ export const createAppointment = async (req, res) => {
     ) {
       return res.status(400).json({
         message:
-          "patientId, doctorId, appointmentType, reason, preferredDateTime and consultationFee are required",
+          "doctorId, appointmentType, reason, preferredDateTime and consultationFee are required, and a valid patient token must be provided",
       });
     }
 
@@ -94,9 +103,20 @@ export const getAppointmentsByPatient = async (req, res) => {
   try {
     const { patientId } = req.params;
 
+    const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
+
     if (!isValidObjectId(patientId)) {
       return res.status(400).json({
         message: "Invalid patientId",
+      });
+    }
+
+    if (
+      req.user.role === "Patient" &&
+      String(loggedInUserId) !== String(patientId)
+    ) {
+      return res.status(403).json({
+        message: "You can only view your own appointments",
       });
     }
 
@@ -121,9 +141,20 @@ export const getAppointmentsByDoctor = async (req, res) => {
   try {
     const { doctorId } = req.params;
 
+    const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
+
     if (!isValidObjectId(doctorId)) {
       return res.status(400).json({
         message: "Invalid doctorId",
+      });
+    }
+
+    if (
+      req.user.role === "Doctor" &&
+      String(loggedInUserId) !== String(doctorId)
+    ) {
+      return res.status(403).json({
+        message: "You can only view your own appointments",
       });
     }
 
@@ -162,6 +193,18 @@ export const getAppointmentById = async (req, res) => {
       });
     }
 
+    const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
+
+    if (
+      req.user.role !== "Admin" &&
+      String(loggedInUserId) !== String(appointment.patientId) &&
+      String(loggedInUserId) !== String(appointment.doctorId)
+    ) {
+      return res.status(403).json({
+        message: "Access denied",
+      });
+    }
+
     return res.status(200).json({
       success: true,
       appointment,
@@ -185,13 +228,23 @@ export const updateAppointmentStatus = async (req, res) => {
       cancellationReason,
     } = req.body;
 
+    const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
+
     if (!isValidObjectId(id)) {
       return res.status(400).json({
         message: "Invalid appointment ID",
       });
     }
 
-    const allowedStatuses = [
+    const doctorAllowedStatuses = [
+      "accepted",
+      "rejected",
+      "rescheduled",
+      "awaiting_payment",
+      "completed",
+    ];
+
+    const adminAllowedStatuses = [
       "accepted",
       "rejected",
       "rescheduled",
@@ -201,18 +254,43 @@ export const updateAppointmentStatus = async (req, res) => {
       "cancelled",
     ];
 
-    if (!status || !allowedStatuses.includes(status)) {
-      return res.status(400).json({
-        message:
-          "Valid status is required: accepted, rejected, rescheduled, awaiting_payment, confirmed, completed, cancelled",
-      });
-    }
-
     const appointment = await Appointment.findById(id);
 
     if (!appointment) {
       return res.status(404).json({
         message: "Appointment not found",
+      });
+    }
+
+    // Doctor can update only own appointments
+    if (
+      req.user.role === "Doctor" &&
+      String(appointment.doctorId) !== String(loggedInUserId)
+    ) {
+      return res.status(403).json({
+        message: "You can only update your own appointments",
+      });
+    }
+
+    // Only Doctor or Admin can use this route
+    if (!["Doctor", "Admin"].includes(req.user.role)) {
+      return res.status(403).json({
+        message: "Access denied",
+      });
+    }
+
+    // Role-based allowed statuses
+    if (req.user.role === "Doctor" && !doctorAllowedStatuses.includes(status)) {
+      return res.status(400).json({
+        message:
+          "Doctor can only set: accepted, rejected, rescheduled, awaiting_payment, completed",
+      });
+    }
+
+    if (req.user.role === "Admin" && !adminAllowedStatuses.includes(status)) {
+      return res.status(400).json({
+        message:
+          "Admin can only set: accepted, rejected, rescheduled, awaiting_payment, confirmed, completed, cancelled",
       });
     }
 
@@ -266,6 +344,8 @@ export const cancelAppointment = async (req, res) => {
     const { id } = req.params;
     const { cancellationReason } = req.body;
 
+    const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
+
     if (!isValidObjectId(id)) {
       return res.status(400).json({
         message: "Invalid appointment ID",
@@ -277,6 +357,33 @@ export const cancelAppointment = async (req, res) => {
     if (!appointment) {
       return res.status(404).json({
         message: "Appointment not found",
+      });
+    }
+
+    // Patient can cancel only own appointments
+    if (
+      req.user.role === "Patient" &&
+      String(appointment.patientId) !== String(loggedInUserId)
+    ) {
+      return res.status(403).json({
+        message: "You can only cancel your own appointments",
+      });
+    }
+
+    // Doctor can cancel only own assigned appointments
+    if (
+      req.user.role === "Doctor" &&
+      String(appointment.doctorId) !== String(loggedInUserId)
+    ) {
+      return res.status(403).json({
+        message: "You can only cancel your own appointments",
+      });
+    }
+
+    // Optional: block other roles if needed
+    if (!["Patient", "Doctor", "Admin"].includes(req.user.role)) {
+      return res.status(403).json({
+        message: "Access denied",
       });
     }
 

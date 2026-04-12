@@ -13,6 +13,8 @@ export const createPayment = async (req, res) => {
     const { appointmentId } = req.params;
     const { method, notes, gatewayResponse } = req.body || {};
 
+    const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
+
     if (!isValidObjectId(appointmentId)) {
       return res.status(400).json({
         message: "Invalid appointment ID",
@@ -27,9 +29,18 @@ export const createPayment = async (req, res) => {
       });
     }
 
+    if (
+      req.user.role !== "Patient" ||
+      String(appointment.patientId) !== String(loggedInUserId)
+    ) {
+      return res.status(403).json({
+        message: "You can only pay for your own appointment",
+      });
+    }
+
     if (appointment.status !== "awaiting_payment") {
       return res.status(400).json({
-        message: "This appointment is already paid",
+        message: "This appointment is not ready for payment",
       });
     }
 
@@ -116,6 +127,18 @@ export const getPaymentById = async (req, res) => {
       });
     }
 
+    const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
+
+    if (
+      req.user.role !== "Admin" &&
+      String(loggedInUserId) !== String(payment.patientId) &&
+      String(loggedInUserId) !== String(payment.doctorId)
+    ) {
+      return res.status(403).json({
+        message: "Access denied",
+      });
+    }
+
     return res.status(200).json({
       success: true,
       payment,
@@ -132,9 +155,20 @@ export const getPaymentsByPatient = async (req, res) => {
   try {
     const { patientId } = req.params;
 
+    const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
+
     if (!isValidObjectId(patientId)) {
       return res.status(400).json({
         message: "Invalid patient ID",
+      });
+    }
+
+    if (
+      req.user.role === "Patient" &&
+      String(loggedInUserId) !== String(patientId)
+    ) {
+      return res.status(403).json({
+        message: "You can only view your own payments",
       });
     }
 
@@ -157,9 +191,20 @@ export const getPaymentsByDoctor = async (req, res) => {
   try {
     const { doctorId } = req.params;
 
+    const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
+
     if (!isValidObjectId(doctorId)) {
       return res.status(400).json({
         message: "Invalid doctor ID",
+      });
+    }
+
+    if (
+      req.user.role === "Doctor" &&
+      String(loggedInUserId) !== String(doctorId)
+    ) {
+      return res.status(403).json({
+        message: "You can only view your own payments",
       });
     }
 

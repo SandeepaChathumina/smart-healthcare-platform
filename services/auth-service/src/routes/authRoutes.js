@@ -16,6 +16,7 @@ import {
   protect,
   authorizeRoles
 } from '../middleware/authMiddleware.js';
+import { requireInternalApiKey } from '../middleware/internalApiKey.js';
 
 const router = express.Router();
 
@@ -39,6 +40,8 @@ router.put(
   requestDoctorVerification
 );
 
-router.post('/internal/users/contacts', getUserContactsInternal);
+// router.post('/internal/users/contacts', getUserContactsInternal);
+
+router.post('/internal/users/contacts', requireInternalApiKey, getUserContactsInternal);
 
 export default router;

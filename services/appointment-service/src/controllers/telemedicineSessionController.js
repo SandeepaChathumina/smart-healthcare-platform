@@ -15,7 +15,9 @@ const generateMeetingLink = (roomName) => {
 export const createTelemedicineSession = async (req, res) => {
   try {
     const { appointmentId } = req.params;
-    const { platform, scheduledEndTime, sessionNotes, createdBy } = req.body || {};
+    const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
+    const { platform, scheduledEndTime, sessionNotes, createdBy } =
+      req.body || {};
 
     if (!isValidObjectId(appointmentId)) {
       return res.status(400).json({
@@ -33,23 +35,39 @@ export const createTelemedicineSession = async (req, res) => {
 
     if (appointment.appointmentType !== "telemedicine") {
       return res.status(400).json({
-        message: "Telemedicine session can only be created for telemedicine appointments",
+        message:
+          "Telemedicine session can only be created for telemedicine appointments",
+      });
+    }
+
+    if (
+      req.user.role !== "Admin" &&
+      String(loggedInUserId) !== String(appointment.patientId) &&
+      String(loggedInUserId) !== String(appointment.doctorId)
+    ) {
+      return res.status(403).json({
+        message:
+          "You can only create telemedicine sessions for your own appointment",
       });
     }
 
     if (appointment.status !== "confirmed") {
       return res.status(400).json({
-        message: "Telemedicine session can only be created for confirmed appointments",
+        message:
+          "Telemedicine session can only be created for confirmed appointments",
       });
     }
 
     if (appointment.paymentStatus !== "paid") {
       return res.status(400).json({
-        message: "Telemedicine session can only be created after successful payment",
+        message:
+          "Telemedicine session can only be created after successful payment",
       });
     }
 
-    const existingSession = await TelemedicineSession.findOne({ appointmentId });
+    const existingSession = await TelemedicineSession.findOne({
+      appointmentId,
+    });
 
     if (existingSession) {
       return res.status(400).json({
@@ -68,7 +86,8 @@ export const createTelemedicineSession = async (req, res) => {
       platform: platform || "jitsi",
       roomName,
       meetingLink,
-      scheduledStartTime: appointment.scheduledDateTime || appointment.preferredDateTime,
+      scheduledStartTime:
+        appointment.scheduledDateTime || appointment.preferredDateTime,
       scheduledEndTime: scheduledEndTime || null,
       sessionNotes: sessionNotes || "",
       createdBy: createdBy || "system",
@@ -128,6 +147,18 @@ export const getTelemedicineSessionById = async (req, res) => {
       });
     }
 
+    const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
+
+    if (
+      req.user.role !== "Admin" &&
+      String(loggedInUserId) !== String(session.patientId) &&
+      String(loggedInUserId) !== String(session.doctorId)
+    ) {
+      return res.status(403).json({
+        message: "Access denied",
+      });
+    }
+
     return res.status(200).json({
       success: true,
       session,
@@ -144,9 +175,20 @@ export const getTelemedicineSessionsByPatient = async (req, res) => {
   try {
     const { patientId } = req.params;
 
+    const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
+
     if (!isValidObjectId(patientId)) {
       return res.status(400).json({
         message: "Invalid patient ID",
+      });
+    }
+
+    if (
+      req.user.role === "Patient" &&
+      String(loggedInUserId) !== String(patientId)
+    ) {
+      return res.status(403).json({
+        message: "You can only view your own telemedicine sessions",
       });
     }
 
@@ -171,9 +213,20 @@ export const getTelemedicineSessionsByDoctor = async (req, res) => {
   try {
     const { doctorId } = req.params;
 
+    const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
+
     if (!isValidObjectId(doctorId)) {
       return res.status(400).json({
         message: "Invalid doctor ID",
+      });
+    }
+
+    if (
+      req.user.role === "Doctor" &&
+      String(loggedInUserId) !== String(doctorId)
+    ) {
+      return res.status(403).json({
+        message: "You can only view your own telemedicine sessions",
       });
     }
 
@@ -197,7 +250,15 @@ export const getTelemedicineSessionsByDoctor = async (req, res) => {
 export const updateTelemedicineSessionStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, actualStartTime, actualEndTime, sessionNotes, recordingUrl } = req.body || {};
+    const {
+      status,
+      actualStartTime,
+      actualEndTime,
+      sessionNotes,
+      recordingUrl,
+    } = req.body || {};
+
+    const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
 
     if (!isValidObjectId(id)) {
       return res.status(400).json({
@@ -205,11 +266,18 @@ export const updateTelemedicineSessionStatus = async (req, res) => {
       });
     }
 
-    const allowedStatuses = ["scheduled", "active", "completed", "cancelled", "expired"];
+    const allowedStatuses = [
+      "scheduled",
+      "active",
+      "completed",
+      "cancelled",
+      "expired",
+    ];
 
     if (!status || !allowedStatuses.includes(status)) {
       return res.status(400).json({
-        message: "Valid status is required: scheduled, active, completed, cancelled, expired",
+        message:
+          "Valid status is required: scheduled, active, completed, cancelled, expired",
       });
     }
 
@@ -218,6 +286,21 @@ export const updateTelemedicineSessionStatus = async (req, res) => {
     if (!session) {
       return res.status(404).json({
         message: "Telemedicine session not found",
+      });
+    }
+
+    if (
+      req.user.role === "Doctor" &&
+      String(session.doctorId) !== String(loggedInUserId)
+    ) {
+      return res.status(403).json({
+        message: "You can only update your own telemedicine sessions",
+      });
+    }
+
+    if (!["Doctor", "Admin"].includes(req.user.role)) {
+      return res.status(403).json({
+        message: "Access denied",
       });
     }
 
