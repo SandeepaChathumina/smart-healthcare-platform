@@ -14,11 +14,12 @@ const validateAppointment = async (appointmentId, doctorId, token) => {
 
     const appointment = response.data.appointment;
 
-    if (appointment.doctorId !== doctorId) {
+    if (String(appointment.doctorId) !== String(doctorId)) {
       throw new Error("This appointment does not belong to you");
     }
 
-    if (appointment.status !== "confirmed" && appointment.status !== "completed") {
+    const validStatuses = ["confirmed", "completed"];
+    if (!validStatuses.includes(appointment.status)) {
       throw new Error(`Cannot add consultation note. Appointment status is ${appointment.status}`);
     }
 
@@ -46,15 +47,18 @@ const updateAppointmentStatus = async (appointmentId, status, token) => {
     return response.data;
   } catch (error) {
     console.error("Failed to update appointment status:", error.message);
+    return null;
   }
 };
 
 const sendNotification = async (receiverIds, eventType, metadata, token) => {
   try {
+    const receivers = Array.isArray(receiverIds) ? receiverIds : [receiverIds];
+    
     const response = await axios.post(
       `${process.env.NOTIFICATION_SERVICE_URL}/api/notifications/send`,
       {
-        receiverIds: [receiverIds],
+        receiverIds: receivers,
         eventType,
         metadata,
       },
@@ -68,6 +72,7 @@ const sendNotification = async (receiverIds, eventType, metadata, token) => {
     return response.data;
   } catch (error) {
     console.error("Failed to send notification:", error.message);
+    return null;
   }
 };
 

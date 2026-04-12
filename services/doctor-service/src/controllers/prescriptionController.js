@@ -37,7 +37,8 @@ exports.createPrescription = async (req, res) => {
 exports.getPrescriptionsByDoctor = async (req, res) => {
   try {
     const { doctorId } = req.params;
-    if (doctorId !== req.user.id) {
+    
+    if (req.user.role === "Doctor" && doctorId !== req.user.id) {
       return res.status(403).json({ message: "You can only view your own prescriptions" });
     }
 
@@ -51,6 +52,22 @@ exports.getPrescriptionsByDoctor = async (req, res) => {
 exports.getPrescriptionsByPatient = async (req, res) => {
   try {
     const { patientId } = req.params;
+    const userRole = req.user.role;
+    const userId = req.user.id;
+
+    if (userRole === "Patient") {
+      if (userId !== patientId) {
+        return res.status(403).json({ message: "You can only view your own prescriptions" });
+      }
+      const prescriptions = await Prescription.find({ patientId }).sort({ issuedDate: -1 });
+      return res.status(200).json({ success: true, count: prescriptions.length, prescriptions });
+    }
+
+    if (userRole === "Doctor") {
+      const prescriptions = await Prescription.find({ patientId, doctorId: userId }).sort({ issuedDate: -1 });
+      return res.status(200).json({ success: true, count: prescriptions.length, prescriptions });
+    }
+
     const prescriptions = await Prescription.find({ patientId }).sort({ issuedDate: -1 });
     res.status(200).json({ success: true, count: prescriptions.length, prescriptions });
   } catch (error) {
@@ -63,8 +80,19 @@ exports.getPrescriptionById = async (req, res) => {
     const { id } = req.params;
     const prescription = await Prescription.findById(id);
 
-    if (!prescription) return res.status(404).json({ message: "Prescription not found" });
-    if (prescription.doctorId !== req.user.id && prescription.patientId !== req.user.id) {
+    if (!prescription) {
+      return res.status(404).json({ message: "Prescription not found" });
+    }
+
+    const userRole = req.user.role;
+    const userId = req.user.id;
+
+    const isAuthorized = 
+      userRole === "Admin" ||
+      (userRole === "Doctor" && prescription.doctorId === userId) ||
+      (userRole === "Patient" && prescription.patientId === userId);
+
+    if (!isAuthorized) {
       return res.status(403).json({ message: "Access denied" });
     }
 
@@ -80,13 +108,18 @@ exports.updatePrescriptionStatus = async (req, res) => {
     const { status } = req.body;
 
     const prescription = await Prescription.findById(id);
-    if (!prescription) return res.status(404).json({ message: "Prescription not found" });
+    
+    if (!prescription) {
+      return res.status(404).json({ message: "Prescription not found" });
+    }
+    
     if (prescription.doctorId !== req.user.id) {
       return res.status(403).json({ message: "You can only update your own prescriptions" });
     }
 
     prescription.status = status;
     await prescription.save();
+    
     res.status(200).json({ success: true, message: "Prescription status updated", prescription });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
