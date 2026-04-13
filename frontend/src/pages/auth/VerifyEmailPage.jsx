@@ -1,13 +1,182 @@
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import AuthLayout from '../../layouts/AuthLayout';
+import AuthCard from '../../components/auth/AuthCard';
+import TextInput from '../../components/ui/TextInput';
+import PrimaryButton from '../../components/ui/PrimaryButton';
+import {
+  requestVerificationOtp,
+  verifyEmailOtp,
+} from '../../services/authService';
+import { APP_ROUTES } from '../../constants/routes';
+
 const VerifyEmailPage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [formData, setFormData] = useState({
+    email: location.state?.email || '',
+    otp: '',
+  });
+
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.email) {
+      setFormData((prev) => ({
+        ...prev,
+        email: location.state.email,
+      }));
+    }
+  }, [location.state]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: '',
+      form: '',
+    }));
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    }
+
+    if (!formData.otp.trim()) {
+      newErrors.otp = 'OTP is required';
+    }
+
+    return newErrors;
+  };
+
+  const handleVerify = async (e) => {
+    e.preventDefault();
+
+    const validationErrors = validateForm();
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      await verifyEmailOtp({
+        email: formData.email,
+        otp: formData.otp,
+      });
+
+      toast.success('Email verified successfully. Please login.');
+      navigate(APP_ROUTES.LOGIN, { replace: true });
+    } catch (error) {
+      const apiMessage =
+        error?.response?.data?.message || 'Email verification failed. Please try again.';
+      setErrors({ form: apiMessage });
+      toast.error(apiMessage);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!formData.email.trim()) {
+      setErrors((prev) => ({
+        ...prev,
+        email: 'Enter your email first to request OTP',
+      }));
+      return;
+    }
+
+    try {
+      setResending(true);
+
+      await requestVerificationOtp({
+        email: formData.email,
+      });
+
+      toast.success('Verification OTP sent successfully');
+    } catch (error) {
+      const apiMessage =
+        error?.response?.data?.message || 'Failed to resend OTP. Please try again.';
+      toast.error(apiMessage);
+    } finally {
+      setResending(false);
+    }
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-lg ring-1 ring-slate-200">
-        <h1 className="text-2xl font-bold text-slate-900">Verify Email</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Email verification form will be created in the next phase.
+    <AuthLayout>
+      <AuthCard
+        title="Verify your email"
+        subtitle="Enter the OTP sent to your email address to activate your account."
+      >
+        <form onSubmit={handleVerify} className="space-y-5">
+          <TextInput
+            label="Email address"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="Enter your email"
+            error={errors.email}
+            disabled={submitting || resending}
+          />
+
+          <TextInput
+            label="OTP code"
+            name="otp"
+            value={formData.otp}
+            onChange={handleChange}
+            placeholder="Enter your OTP"
+            error={errors.otp}
+            disabled={submitting}
+          />
+
+          {errors.form ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {errors.form}
+            </div>
+          ) : null}
+
+          <PrimaryButton type="submit" disabled={submitting}>
+            {submitting ? 'Verifying...' : 'Verify email'}
+          </PrimaryButton>
+
+          <button
+            type="button"
+            onClick={handleResendOtp}
+            disabled={resending || submitting}
+            className="w-full rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+          >
+            {resending ? 'Sending OTP...' : 'Resend OTP'}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-slate-600">
+          Already verified?{' '}
+          <Link
+            to={APP_ROUTES.LOGIN}
+            className="font-semibold text-blue-600 hover:text-blue-700"
+          >
+            Back to login
+          </Link>
         </p>
-      </div>
-    </div>
+      </AuthCard>
+    </AuthLayout>
   );
 };
 

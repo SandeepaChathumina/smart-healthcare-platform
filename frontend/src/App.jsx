@@ -26,12 +26,12 @@ function App() {
       <Route element={<GuestRoute />}>
         <Route path={APP_ROUTES.LOGIN} element={<LoginPage />} />
         <Route path={APP_ROUTES.REGISTER} element={<RegisterPage />} />
+        <Route path={APP_ROUTES.VERIFY_EMAIL} element={<VerifyEmailPage />} />
         <Route path={APP_ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
         <Route path={APP_ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
       </Route>
 
       <Route element={<ProtectedRoute />}>
-        <Route path={APP_ROUTES.VERIFY_EMAIL} element={<VerifyEmailPage />} />
         <Route path={APP_ROUTES.PENDING_APPROVAL} element={<PendingApprovalPage />} />
         <Route path={APP_ROUTES.ACCOUNT_BLOCKED} element={<AccountBlockedPage />} />
 
