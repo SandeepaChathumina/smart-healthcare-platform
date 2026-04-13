@@ -19,6 +19,9 @@ import VerifiedRoute from './routes/VerifiedRoute';
 import DoctorApprovalRoute from './routes/DoctorApprovalRoute';
 import RoleProtectedRoute from './routes/RoleProtectedRoute';
 import { APP_ROUTES } from './constants/routes';
+import PendingDoctorsPage from './pages/admin/PendingDoctorsPage';
+import AllUsersPage from './pages/admin/AllUsersPage';
+import DoctorsPage from './pages/admin/DoctorsPage';
 
 function App() {
   return (
@@ -101,8 +104,30 @@ function App() {
             >
               <Route index element={<EditProfilePage />} />
             </Route>
+
+            <Route
+              path={APP_ROUTES.ADMIN_PENDING_DOCTORS}
+              element={<RoleProtectedRoute allowedRoles={['Admin']} />}
+            >
+              <Route index element={<PendingDoctorsPage />} />
+            </Route>
+
           </Route>
         </Route>
+      </Route>
+
+      <Route
+        path={APP_ROUTES.ADMIN_ALL_USERS}
+        element={<RoleProtectedRoute allowedRoles={['Admin']} />}
+      >
+        <Route index element={<AllUsersPage />} />
+      </Route>
+
+      <Route
+        path={APP_ROUTES.ADMIN_DOCTORS}
+        element={<RoleProtectedRoute allowedRoles={['Admin']} />}
+      >
+        <Route index element={<DoctorsPage />} />
       </Route>
 
       <Route path={APP_ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />

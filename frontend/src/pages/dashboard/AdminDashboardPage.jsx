@@ -7,7 +7,10 @@ const AdminDashboardPage = () => {
   return (
     <DashboardLayout title="Admin Dashboard">
       <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-        <p className="text-sm text-slate-600">Logged in admin details below.</p>
+        <h2 className="text-xl font-bold text-slate-900">Admin Session Info</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          Temporary admin dashboard overview.
+        </p>
 
         <div className="mt-6 space-y-3 rounded-2xl bg-slate-100 p-6 text-sm text-slate-700">
           <p><strong>ID:</strong> {user?.id}</p>
