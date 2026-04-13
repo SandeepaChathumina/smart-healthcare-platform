@@ -18,7 +18,6 @@ export const createAppointment = async (req, res) => {
     } = req.body;
 
     const patientId = req.user?.id || req.user?._id || req.user?.userId;
-    console.log("req.user =", req.user);
 
     if (req.user.role !== "Patient") {
       return res

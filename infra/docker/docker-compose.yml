@@ -1,34 +1,49 @@
 version: "3.8"
 
 services:
-  mongo:
-    image: mongo
-    container_name: mongo
-    ports:
-      - "27017:27017"
+  # mongo:
+  #   image: mongo
+  #   container_name: mongo
+  #   ports:
+  #     - "27017:27017"
 
   auth-service:
     build: ../../services/auth-service
     ports:
       - "5001:5001"
     environment:
-      - INTERNAL_SERVICE_API_KEY=my_internal_key_123
-    depends_on:
-      - mongo
+      - PORT=5001
+      - MONGO_URI=${AUTH_MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - INTERNAL_SERVICE_API_KEY=${INTERNAL_SERVICE_API_KEY}
+    # depends_on:
+    #   - mongo
 
   doctor-service:
     build: ../../services/doctor-service
     ports:
       - "5003:5003"
-    depends_on:
-      - mongo
+    environment:
+      - PORT=5003
+      - MONGO_URI=${DOCTOR_MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - APPOINTMENT_SERVICE_URL=http://appointment-service:5004
+      - NOTIFICATION_SERVICE_URL=http://notification-service:5010
+      - INTERNAL_SERVICE_API_KEY=${INTERNAL_SERVICE_API_KEY}
+    # depends_on:
+    #   - mongo
 
   appointment-service:
     build: ../../services/appointment-service
     ports:
       - "5004:5004"
-    depends_on:
-      - mongo
+    environment:
+      - PORT=5004
+      - MONGO_URI=${APPOINTMENT_MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - INTERNAL_SERVICE_API_KEY=${INTERNAL_SERVICE_API_KEY}
+    # depends_on:
+    #   - mongo
 
   patient-service:
     build: ../../services/patient-service
@@ -37,12 +52,12 @@ services:
       - "5002:5002"
     environment:
       - PORT=5002
-      - MONGO_URI=mongodb://mongo:27017/smart_healthcare
+      - MONGO_URI=${PATIENT_MONGO_URI}
       - JWT_SECRET=${JWT_SECRET}
       - FILE_UPLOAD_PATH=./uploads
       - MAX_FILE_SIZE=5242880
-    depends_on:
-      - mongo
+    # depends_on:
+    #   - mongo
     volumes:
       - ../../services/patient-service:/app
       - /app/node_modules
@@ -54,11 +69,11 @@ services:
       - "5011:5010"
     environment:
       - PORT=5010
-      - MONGO_URI=mongodb://mongo:27017/smart_healthcare
+      - MONGO_URI=${NOTIFICATION_MONGO_URI}
       - AUTH_SERVICE_URL=http://auth-service:5001
-      - INTERNAL_SERVICE_API_KEY=my_internal_key_123
+      - INTERNAL_SERVICE_API_KEY=${INTERNAL_SERVICE_API_KEY}
     depends_on:
-      - mongo
+      # - mongo
       - auth-service
 
   frontend:
