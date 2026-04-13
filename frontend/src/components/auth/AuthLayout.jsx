@@ -1,4 +1,4 @@
-import AuthSidePanel from '../../components/auth/AuthSidePanel';
+import AuthSidePanel from '../components/auth/AuthSidePanel';
 
 const AuthLayout = ({ children }) => {
   return (

@@ -48,7 +48,9 @@ const VerifyEmailPage = () => {
     }));
   };
 
-  const validateForm = () => {
+  const handleVerify = async (e) => {
+    e.preventDefault();
+
     const newErrors = {};
 
     if (!formData.email.trim()) {
@@ -59,16 +61,8 @@ const VerifyEmailPage = () => {
       newErrors.otp = 'OTP is required';
     }
 
-    return newErrors;
-  };
-
-  const handleVerify = async (e) => {
-    e.preventDefault();
-
-    const validationErrors = validateForm();
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -81,7 +75,11 @@ const VerifyEmailPage = () => {
       });
 
       toast.success('Email verified successfully. Please login.');
-      navigate(APP_ROUTES.LOGIN, { replace: true });
+
+      navigate(APP_ROUTES.LOGIN, {
+        replace: true,
+        state: { email: formData.email },
+      });
     } catch (error) {
       const apiMessage =
         error?.response?.data?.message || 'Email verification failed. Please try again.';
@@ -96,7 +94,7 @@ const VerifyEmailPage = () => {
     if (!formData.email.trim()) {
       setErrors((prev) => ({
         ...prev,
-        email: 'Enter your email first to request OTP',
+        email: 'Email is required',
       }));
       return;
     }
@@ -121,8 +119,8 @@ const VerifyEmailPage = () => {
   return (
     <AuthLayout>
       <AuthCard
-        title="Verify your email"
-        subtitle="Enter the OTP sent to your email address to activate your account."
+        title="Enter verification OTP"
+        subtitle="Enter the OTP sent to your email address to verify your account."
       >
         <form onSubmit={handleVerify} className="space-y-5">
           <TextInput
@@ -153,26 +151,26 @@ const VerifyEmailPage = () => {
           ) : null}
 
           <PrimaryButton type="submit" disabled={submitting}>
-            {submitting ? 'Verifying...' : 'Verify email'}
+            {submitting ? 'Verifying...' : 'Verify Email'}
           </PrimaryButton>
 
           <button
             type="button"
             onClick={handleResendOtp}
             disabled={resending || submitting}
-            className="w-full rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+            className="w-full rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:bg-slate-100"
           >
             {resending ? 'Sending OTP...' : 'Resend OTP'}
           </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-slate-600">
-          Already verified?{' '}
+          Need to change email?{' '}
           <Link
-            to={APP_ROUTES.LOGIN}
+            to={APP_ROUTES.VERIFY_ACCOUNT}
             className="font-semibold text-blue-600 hover:text-blue-700"
           >
-            Back to login
+            Go back
           </Link>
         </p>
       </AuthCard>

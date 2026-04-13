@@ -2,6 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 import SidebarLink from '../components/dashboard/SidebarLink';
 import { APP_ROUTES } from '../constants/routes';
+import { adminLinks } from '../data/dashboard/adminLinks';
+import { doctorLinks } from '../data/dashboard/doctorLinks';
+import { patientLinks } from '../data/dashboard/patientLinks';
 
 const DashboardLayout = ({ title, children }) => {
   const { user, logout } = useAuth();
@@ -10,26 +13,11 @@ const DashboardLayout = ({ title, children }) => {
   const getLinks = () => {
     switch (user?.role) {
       case 'Admin':
-        return [
-          { label: 'Dashboard', path: APP_ROUTES.ADMIN_DASHBOARD },
-          { label: 'My Profile', path: APP_ROUTES.ADMIN_PROFILE },
-          { label: 'Pending Doctors', path: APP_ROUTES.ADMIN_PENDING_DOCTORS },
-          { label: 'All Users', path: APP_ROUTES.ADMIN_ALL_USERS },
-          { label: 'Doctors', path: APP_ROUTES.ADMIN_DOCTORS },
-        ];
-
+        return adminLinks;
       case 'Doctor':
-        return [
-          { label: 'Dashboard', path: APP_ROUTES.DOCTOR_DASHBOARD },
-          { label: 'My Profile', path: APP_ROUTES.DOCTOR_PROFILE },
-        ];
-
+        return doctorLinks;
       case 'Patient':
-        return [
-          { label: 'Dashboard', path: APP_ROUTES.PATIENT_DASHBOARD },
-          { label: 'My Profile', path: APP_ROUTES.PATIENT_PROFILE },
-        ];
-
+        return patientLinks;
       default:
         return [];
     }
@@ -43,19 +31,20 @@ const DashboardLayout = ({ title, children }) => {
   const links = getLinks();
 
   return (
-    <div className="min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50">
       <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
-        <aside className="border-r border-slate-200 bg-white px-6 py-8">
+        <aside className="border-r border-slate-200/50 bg-white/95 backdrop-blur px-6 py-8 shadow-sm sticky top-0 h-screen overflow-y-auto">
           <div className="mb-8">
-            <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+            <span className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-50 to-cyan-50 px-4 py-1.5 text-xs font-bold text-blue-700 border border-blue-100/50">
+              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
               Smart Healthcare
             </span>
 
-            <h2 className="mt-4 text-xl font-bold text-slate-900">
+            <h2 className="mt-6 text-xl font-bold text-slate-900">
               {user?.role || 'User'} Panel
             </h2>
 
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-slate-600 truncate">
               {user?.fullName || 'Authenticated User'}
             </p>
           </div>
@@ -67,25 +56,25 @@ const DashboardLayout = ({ title, children }) => {
               </SidebarLink>
             ))}
           </nav>
+
+          <button
+            onClick={handleLogout}
+            className="mt-8 w-full rounded-lg border border-red-200/50 px-4 py-2 text-sm font-semibold text-red-600 transition duration-200 hover:bg-red-50 hover:border-red-300"
+          >
+            Logout
+          </button>
         </aside>
 
         <main className="p-6 lg:p-8">
-          <div className="mb-6 flex flex-col gap-4 rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mb-8 flex flex-col gap-4 rounded-2xl bg-white/60 backdrop-blur p-8 shadow-md border border-slate-200/50 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900">
                 {title}
               </h1>
-              <p className="mt-1 text-sm text-slate-600">
-                Welcome back, {user?.fullName}
+              <p className="mt-2 text-sm text-slate-600">
+                Welcome back, <span className="font-semibold text-slate-900">{user?.fullName}</span>
               </p>
             </div>
-
-            <button
-              onClick={handleLogout}
-              className="rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-700"
-            >
-              Logout
-            </button>
           </div>
 
           {children}

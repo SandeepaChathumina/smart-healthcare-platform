@@ -2,7 +2,10 @@ export const APP_ROUTES = {
   HOME: '/',
   LOGIN: '/login',
   REGISTER: '/register',
+
+  VERIFY_ACCOUNT: '/verify-account',
   VERIFY_EMAIL: '/verify-email',
+
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',
 
@@ -22,11 +25,8 @@ export const APP_ROUTES = {
   DOCTOR_PROFILE_EDIT: '/doctor/profile/edit',
   PATIENT_PROFILE_EDIT: '/patient/profile/edit',
 
-  ADMIN_CHANGE_PASSWORD: '/admin/change-password',
-  DOCTOR_CHANGE_PASSWORD: '/doctor/change-password',
-  PATIENT_CHANGE_PASSWORD: '/patient/change-password',
-
   ADMIN_PENDING_DOCTORS: '/admin/doctors/pending',
   ADMIN_ALL_USERS: '/admin/users',
   ADMIN_DOCTORS: '/admin/doctors',
+  ADMIN_PATIENTS: '/admin/patients',
 };

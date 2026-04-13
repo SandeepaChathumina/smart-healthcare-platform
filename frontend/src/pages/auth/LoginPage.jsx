@@ -37,15 +37,6 @@ const LoginPage = () => {
     }));
   };
 
-  const handleDemoFill = (email, password) => {
-    setFormData({
-      email,
-      password,
-    });
-
-    setErrors({});
-  };
-
   const validateForm = () => {
     const newErrors = {};
 
@@ -60,20 +51,12 @@ const LoginPage = () => {
     return newErrors;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const validationErrors = validateForm();
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
+  const finishLogin = async (credentials) => {
     try {
       setSubmitting(true);
+      setErrors({});
 
-      const response = await login(formData);
+      const response = await login(credentials);
       const user = response?.user;
 
       const blockedMessage = getLoginBlockedMessage(user);
@@ -94,11 +77,39 @@ const LoginPage = () => {
       const apiMessage =
         error?.response?.data?.message || 'Login failed. Please check your credentials.';
 
+      if (apiMessage.toLowerCase().includes('verify your email')) {
+        toast.error(apiMessage);
+
+        navigate(APP_ROUTES.VERIFY_ACCOUNT, {
+          state: { email: credentials.email },
+        });
+        return;
+      }
+
       setErrors({ form: apiMessage });
       toast.error(apiMessage);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleDemoLogin = async (email, password) => {
+    const demoCredentials = { email, password };
+    setFormData(demoCredentials);
+    await finishLogin(demoCredentials);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const validationErrors = validateForm();
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    await finishLogin(formData);
   };
 
   return (
@@ -136,43 +147,44 @@ const LoginPage = () => {
             <div className="grid gap-3 sm:grid-cols-3">
               <button
                 type="button"
-                onClick={() =>
-                  handleDemoFill('jwstudio12345@gmail.com', '12345678')
-                }
-                className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                onClick={() => handleDemoLogin('jwstudio12345@gmail.com', '12345678')}
+                className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                 disabled={submitting}
               >
-                Use Patient Demo
+                Patient Demo
               </button>
 
               <button
                 type="button"
-                onClick={() =>
-                  handleDemoFill('it23800632@my.sliit.lk', '12345678')
-                }
-                className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                onClick={() => handleDemoLogin('it23800632@my.sliit.lk', '12345678')}
+                className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                 disabled={submitting}
               >
-                Use Admin Demo
+                Admin Demo
               </button>
 
               <button
                 type="button"
-                onClick={() =>
-                  handleDemoFill('chat.pro.gang@gmail.com', '12345678')
-                }
-                className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                onClick={() => handleDemoLogin('chat.pro.gang@gmail.com', '12345678')}
+                className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                 disabled={submitting}
               >
-                Use Doctor Demo
+                Doctor Demo
               </button>
             </div>
           </div>
 
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between gap-4">
+            <Link
+              to={APP_ROUTES.VERIFY_ACCOUNT}
+              className="text-sm font-semibold text-blue-600 transition hover:text-blue-700"
+            >
+              Need to verify account?
+            </Link>
+
             <Link
               to={APP_ROUTES.FORGOT_PASSWORD}
-              className="text-sm font-semibold text-blue-600 hover:text-blue-700"
+              className="text-sm font-semibold text-blue-600 transition hover:text-blue-700"
             >
               Forgot password?
             </Link>
@@ -193,7 +205,7 @@ const LoginPage = () => {
           Don&apos;t have an account?{' '}
           <Link
             to={APP_ROUTES.REGISTER}
-            className="font-semibold text-blue-600 hover:text-blue-700"
+            className="font-semibold text-blue-600 transition hover:text-blue-700"
           >
             Create account
           </Link>

@@ -22,6 +22,8 @@ import { APP_ROUTES } from './constants/routes';
 import PendingDoctorsPage from './pages/admin/PendingDoctorsPage';
 import AllUsersPage from './pages/admin/AllUsersPage';
 import DoctorsPage from './pages/admin/DoctorsPage';
+import PatientsPage from './pages/admin/PatientsPage';
+import VerifyAccountPage from './pages/auth/VerifyAccountPage';
 
 function App() {
   return (
@@ -34,6 +36,7 @@ function App() {
         <Route path={APP_ROUTES.VERIFY_EMAIL} element={<VerifyEmailPage />} />
         <Route path={APP_ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
         <Route path={APP_ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
+        <Route path={APP_ROUTES.VERIFY_ACCOUNT} element={<VerifyAccountPage />} />
       </Route>
 
       <Route element={<ProtectedRoute />}>
@@ -128,6 +131,13 @@ function App() {
         element={<RoleProtectedRoute allowedRoles={['Admin']} />}
       >
         <Route index element={<DoctorsPage />} />
+      </Route>
+
+      <Route
+        path={APP_ROUTES.ADMIN_PATIENTS}
+        element={<RoleProtectedRoute allowedRoles={['Admin']} />}
+      >
+        <Route index element={<PatientsPage />} />
       </Route>
 
       <Route path={APP_ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />

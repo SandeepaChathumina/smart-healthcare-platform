@@ -21,10 +21,21 @@ const RegisterPage = () => {
     phone: '',
     password: '',
     role: 'Patient',
+    specialization: '',
+    qualifications: '',
+    licenseNumber: '',
+    hospitalOrClinic: '',
+    experience: '',
+    consultationFee: '',
+    bio: '',
+    location: '',
   });
 
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+
+  const isDoctor = formData.role === 'Doctor';
+  const isAdmin = formData.role === 'Admin';
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -62,19 +73,21 @@ const RegisterPage = () => {
       newErrors.password = 'Password must be at least 6 characters';
     }
 
-    return newErrors;
-  };
+    if (isDoctor) {
+      if (!formData.specialization.trim()) {
+        newErrors.specialization = 'Specialization is required';
+      }
 
-  const getRegisterHandler = () => {
-    switch (formData.role) {
-      case 'Admin':
-        return registerAdmin;
-      case 'Doctor':
-        return registerDoctor;
-      case 'Patient':
-      default:
-        return registerPatient;
+      if (!formData.qualifications.trim()) {
+        newErrors.qualifications = 'Qualifications are required';
+      }
+
+      if (!formData.licenseNumber.trim()) {
+        newErrors.licenseNumber = 'License number is required';
+      }
     }
+
+    return newErrors;
   };
 
   const handleSubmit = async (e) => {
@@ -90,24 +103,48 @@ const RegisterPage = () => {
     try {
       setSubmitting(true);
 
-      const registerHandler = getRegisterHandler();
+      if (isDoctor) {
+        await registerDoctor({
+          fullName: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+          phone: formData.phone,
+          specialization: formData.specialization,
+          qualifications: formData.qualifications,
+          licenseNumber: formData.licenseNumber,
+          hospitalOrClinic: formData.hospitalOrClinic,
+          experience: formData.experience ? Number(formData.experience) : undefined,
+          consultationFee: formData.consultationFee
+            ? Number(formData.consultationFee)
+            : undefined,
+          bio: formData.bio,
+          location: formData.location,
+        });
 
-      await registerHandler({
-        fullName: formData.fullName,
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password,
-      });
-
-      if (formData.role === 'Doctor') {
         toast.success(
-          'Doctor registration successful. Please verify email first. After verification, admin approval is required.'
+          'Doctor registration successful. You can verify your account now or later.'
         );
+      } else if (isAdmin) {
+        await registerAdmin({
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+        });
+
+        toast.success('Registration successful. You can verify your account now or later.');
       } else {
-        toast.success('Registration successful. Please verify your email.');
+        await registerPatient({
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+        });
+
+        toast.success('Registration successful. You can verify your account now or later.');
       }
 
-      navigate(APP_ROUTES.VERIFY_EMAIL, {
+      navigate(APP_ROUTES.VERIFY_ACCOUNT, {
         replace: true,
         state: {
           email: formData.email,
@@ -179,12 +216,93 @@ const RegisterPage = () => {
               <option value="Admin">Admin</option>
             </select>
 
-            {formData.role === 'Doctor' ? (
+            {isDoctor ? (
               <p className="mt-2 text-xs font-medium text-amber-600">
                 Doctors must verify email and wait for admin approval before full access.
               </p>
             ) : null}
           </div>
+
+          {isDoctor ? (
+            <>
+              <TextInput
+                label="Specialization"
+                name="specialization"
+                value={formData.specialization}
+                onChange={handleChange}
+                placeholder="Enter specialization"
+                error={errors.specialization}
+                disabled={submitting}
+              />
+
+              <TextInput
+                label="Qualifications"
+                name="qualifications"
+                value={formData.qualifications}
+                onChange={handleChange}
+                placeholder="Enter qualifications"
+                error={errors.qualifications}
+                disabled={submitting}
+              />
+
+              <TextInput
+                label="License Number"
+                name="licenseNumber"
+                value={formData.licenseNumber}
+                onChange={handleChange}
+                placeholder="Enter license number"
+                error={errors.licenseNumber}
+                disabled={submitting}
+              />
+
+              <TextInput
+                label="Hospital / Clinic"
+                name="hospitalOrClinic"
+                value={formData.hospitalOrClinic}
+                onChange={handleChange}
+                placeholder="Enter hospital or clinic"
+                disabled={submitting}
+              />
+
+              <TextInput
+                label="Experience"
+                name="experience"
+                type="number"
+                value={formData.experience}
+                onChange={handleChange}
+                placeholder="Enter years of experience"
+                disabled={submitting}
+              />
+
+              <TextInput
+                label="Consultation Fee"
+                name="consultationFee"
+                type="number"
+                value={formData.consultationFee}
+                onChange={handleChange}
+                placeholder="Enter consultation fee"
+                disabled={submitting}
+              />
+
+              <TextInput
+                label="Bio"
+                name="bio"
+                value={formData.bio}
+                onChange={handleChange}
+                placeholder="Enter short bio"
+                disabled={submitting}
+              />
+
+              <TextInput
+                label="Location"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="Enter location"
+                disabled={submitting}
+              />
+            </>
+          ) : null}
 
           <TextInput
             label="Password"
@@ -212,7 +330,7 @@ const RegisterPage = () => {
           Already have an account?{' '}
           <Link
             to={APP_ROUTES.LOGIN}
-            className="font-semibold text-blue-600 hover:text-blue-700"
+            className="font-semibold text-blue-600 transition hover:text-blue-700"
           >
             Sign in
           </Link>
