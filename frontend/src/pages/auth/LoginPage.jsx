@@ -37,6 +37,15 @@ const LoginPage = () => {
     }));
   };
 
+  const handleDemoFill = (email, password) => {
+    setFormData({
+      email,
+      password,
+    });
+
+    setErrors({});
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -120,6 +129,45 @@ const LoginPage = () => {
             error={errors.password}
             disabled={submitting}
           />
+
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="mb-3 text-sm font-semibold text-slate-800">Demo accounts</p>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <button
+                type="button"
+                onClick={() =>
+                  handleDemoFill('jwstudio12345@gmail.com', '12345678')
+                }
+                className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                disabled={submitting}
+              >
+                Use Patient Demo
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  handleDemoFill('it23800632@my.sliit.lk', '12345678')
+                }
+                className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                disabled={submitting}
+              >
+                Use Admin Demo
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  handleDemoFill('chat.pro.gang@gmail.com', '12345678')
+                }
+                className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                disabled={submitting}
+              >
+                Use Doctor Demo
+              </button>
+            </div>
+          </div>
 
           <div className="flex items-center justify-end">
             <Link

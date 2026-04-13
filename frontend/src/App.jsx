@@ -11,6 +11,8 @@ import AccountBlockedPage from './pages/status/AccountBlockedPage';
 import AdminDashboardPage from './pages/dashboard/AdminDashboardPage';
 import DoctorDashboardPage from './pages/dashboard/DoctorDashboardPage';
 import PatientDashboardPage from './pages/dashboard/PatientDashboardPage';
+import ProfilePage from './pages/profile/ProfilePage';
+import EditProfilePage from './pages/profile/EditProfilePage';
 import GuestRoute from './routes/GuestRoute';
 import ProtectedRoute from './routes/ProtectedRoute';
 import VerifiedRoute from './routes/VerifiedRoute';
@@ -56,6 +58,48 @@ function App() {
               element={<RoleProtectedRoute allowedRoles={['Patient']} />}
             >
               <Route index element={<PatientDashboardPage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.ADMIN_PROFILE}
+              element={<RoleProtectedRoute allowedRoles={['Admin']} />}
+            >
+              <Route index element={<ProfilePage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.DOCTOR_PROFILE}
+              element={<RoleProtectedRoute allowedRoles={['Doctor']} />}
+            >
+              <Route index element={<ProfilePage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.PATIENT_PROFILE}
+              element={<RoleProtectedRoute allowedRoles={['Patient']} />}
+            >
+              <Route index element={<ProfilePage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.ADMIN_PROFILE_EDIT}
+              element={<RoleProtectedRoute allowedRoles={['Admin']} />}
+            >
+              <Route index element={<EditProfilePage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.DOCTOR_PROFILE_EDIT}
+              element={<RoleProtectedRoute allowedRoles={['Doctor']} />}
+            >
+              <Route index element={<EditProfilePage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.PATIENT_PROFILE_EDIT}
+              element={<RoleProtectedRoute allowedRoles={['Patient']} />}
+            >
+              <Route index element={<EditProfilePage />} />
             </Route>
           </Route>
         </Route>

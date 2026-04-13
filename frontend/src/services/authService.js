@@ -40,6 +40,26 @@ export const resetPassword = async (payload) => {
   return response.data;
 };
 
+export const getPatientProfile = async () => {
+  const response = await axiosInstance.get('/api/patient/profile');
+  return response.data;
+};
+
+export const updatePatientProfile = async (payload) => {
+  const response = await axiosInstance.put('/api/patient/profile', payload);
+  return response.data;
+};
+
+export const getDoctorProfile = async () => {
+  const response = await axiosInstance.get('/api/doctor/profile');
+  return response.data;
+};
+
+export const updateDoctorProfile = async (payload) => {
+  const response = await axiosInstance.put('/api/doctor/profile', payload);
+  return response.data;
+};
+
 export const logoutUser = async () => {
   const response = await axiosInstance.post('/api/auth/logout');
   return response.data;
