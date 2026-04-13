@@ -137,3 +137,7 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Ignore patient uploads
+services/patient-service/uploads/*
+!services/patient-service/uploads/.gitkeep
