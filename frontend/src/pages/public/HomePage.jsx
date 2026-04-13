@@ -1,4 +1,7 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 import {
   ShieldCheck,
   Stethoscope,
@@ -117,42 +120,60 @@ const footerLinks = {
 };
 
 const HomePage = () => {
+  useEffect(() => {
+    AOS.init({
+      duration: 900,
+      easing: 'ease-out-cubic',
+      once: true,
+      offset: 80,
+      mirror: false,
+    });
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 text-slate-900">
-      <header className="sticky top-0 z-30   backdrop-blur-xl ">
+      <header className="sticky top-0 z-30 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 lg:px-8">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-50 to-cyan-50 px-4 py-1.5 text-xs font-bold text-blue-700 border border-blue-100/50">
-              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+          <div data-aos="fade-down" data-aos-duration="700">
+            <span className="inline-flex items-center gap-2 rounded-full border border-blue-100/50 bg-gradient-to-r from-blue-50 to-cyan-50 px-4 py-1.5 text-xs font-bold text-blue-700">
+              <div className="h-2 w-2 rounded-full bg-blue-600"></div>
               Smart Healthcare Platform
             </span>
           </div>
 
-          <nav className="hidden items-center gap-8 md:flex">
-            <a href="#features" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition duration-200">
+          <nav
+            data-aos="fade-down"
+            data-aos-delay="100"
+            className="hidden items-center gap-8 md:flex"
+          >
+            <a href="#features" className="text-sm font-medium text-slate-600 transition duration-200 hover:text-blue-600">
               Features
             </a>
-            <a href="#roles" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition duration-200">
+            <a href="#roles" className="text-sm font-medium text-slate-600 transition duration-200 hover:text-blue-600">
               Roles
             </a>
-            <a href="#workflow" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition duration-200">
+            <a href="#workflow" className="text-sm font-medium text-slate-600 transition duration-200 hover:text-blue-600">
               Workflow
             </a>
-            <a href="#footer" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition duration-200">
+            <a href="#footer" className="text-sm font-medium text-slate-600 transition duration-200 hover:text-blue-600">
               Contact
             </a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div
+            data-aos="fade-down"
+            data-aos-delay="200"
+            className="flex items-center gap-3"
+          >
             <Link
               to={APP_ROUTES.LOGIN}
-              className="rounded-lg border border-slate-300/50 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition duration-200 hover:bg-slate-50 hover:border-slate-400 shadow-sm"
+              className="rounded-lg border border-slate-300/50 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition duration-200 hover:border-slate-400 hover:bg-slate-50"
             >
               Login
             </Link>
             <Link
               to={APP_ROUTES.REGISTER}
-              className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2 text-sm font-semibold text-white transition duration-200 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl"
+              className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-lg transition duration-200 hover:from-blue-700 hover:to-blue-800 hover:shadow-xl"
             >
               Create Account
             </Link>
@@ -162,34 +183,34 @@ const HomePage = () => {
 
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-10 left-1/2 -translate-x-1/2 w-96 h-96 bg-blue-400 rounded-full blur-3xl"></div>
+          <div className="absolute left-1/2 top-10 h-96 w-96 -translate-x-1/2 rounded-full bg-blue-400 blur-3xl"></div>
         </div>
-        
-        {/* Adjusted padding (py-10 lg:py-12) and gap (gap-8) to fit on one screen */}
-        <div className="mx-auto grid max-w-7xl items-center gap-8 px-6 py-10 lg:grid-cols-2 lg:px-8 lg:py-12 relative">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-50 to-blue-50 px-4 py-1.5 text-xs font-bold text-cyan-700 border border-cyan-100/50">
-              <div className="w-2 h-2 bg-cyan-600 rounded-full"></div>
+
+        <div className="relative mx-auto grid max-w-7xl items-center gap-8 px-6 py-10 lg:grid-cols-2 lg:px-8 lg:py-12">
+          <div data-aos="fade-right" data-aos-duration="900">
+            <span className="inline-flex items-center gap-2 rounded-full border border-cyan-100/50 bg-gradient-to-r from-cyan-50 to-blue-50 px-4 py-1.5 text-xs font-bold text-cyan-700">
+              <div className="h-2 w-2 rounded-full bg-cyan-600"></div>
               Modern Healthcare Access Management
             </span>
 
-            {/* Slightly reduced text size and margin */}
-            <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl leading-tight">
-              Professional <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">healthcare platform</span> for everyone
+            <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+              Professional{' '}
+              <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                healthcare platform
+              </span>{' '}
+              for everyone
             </h1>
 
-            {/* Reduced margin */}
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-600">
               A professional healthcare authentication and user management system with
               secure login, email verification, doctor approval workflows, password
               recovery, role-based dashboards, and structured admin management tools.
             </p>
 
-            {/* Reduced margin */}
             <div className="mt-8 flex flex-wrap gap-4">
               <Link
                 to={APP_ROUTES.LOGIN}
-                className="inline-flex items-center rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:shadow-xl transition duration-200 hover:from-blue-700 hover:to-blue-800"
+                className="inline-flex items-center rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-3 text-sm font-semibold text-white shadow-lg transition duration-200 hover:from-blue-700 hover:to-blue-800 hover:shadow-xl"
               >
                 Access Platform
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -197,60 +218,83 @@ const HomePage = () => {
 
               <Link
                 to={APP_ROUTES.REGISTER}
-                className="rounded-lg border border-slate-300/50 bg-white px-6 py-3 text-sm font-semibold text-slate-700 transition duration-200 hover:bg-slate-50 hover:border-slate-400 shadow-sm"
+                className="rounded-lg border border-slate-300/50 bg-white px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition duration-200 hover:border-slate-400 hover:bg-slate-50"
               >
                 Register New Account
               </Link>
             </div>
 
-            {/* Reduced margin and inner padding */}
             <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {stats.map((item) => (
+              {stats.map((item, index) => (
                 <div
                   key={item.label}
-                  className="rounded-2xl border border-slate-200/50 bg-white/60 backdrop-blur p-4 shadow-md hover:shadow-lg transition duration-200 hover:border-blue-200/50"
+                  data-aos="fade-up"
+                  data-aos-delay={index * 100}
+                  data-aos-duration="700"
                 >
-                  <p className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">{item.value}</p>
-                  <p className="mt-1 text-xs text-slate-600 font-medium">{item.label}</p>
+                  <div className="rounded-2xl border border-slate-200/50 bg-white/60 p-4 shadow-md backdrop-blur transition duration-200 hover:border-blue-200/50 hover:shadow-lg">
+                    <p className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-2xl font-bold text-transparent">
+                      {item.value}
+                    </p>
+                    <p className="mt-1 text-xs font-medium text-slate-600">{item.label}</p>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="relative w-full max-w-lg mx-auto lg:max-w-none">
-            <div className="absolute -inset-6 bg-gradient-to-br from-blue-400/20 via-cyan-400/10 to-transparent rounded-[2.5rem] blur-2xl"></div>
-            
-            <div className="rounded-[2.5rem] bg-white/60 border border-white/80 backdrop-blur-xl p-4 shadow-2xl relative">
-              <div className="rounded-[1.5rem] bg-white overflow-hidden">
-                {/* Reduced image heights to ensure it stays above the fold */}
+          <div
+            data-aos="fade-left"
+            data-aos-delay="150"
+            data-aos-duration="900"
+            className="relative mx-auto w-full max-w-lg lg:max-w-none"
+          >
+            <div className="absolute -inset-6 rounded-[2.5rem] bg-gradient-to-br from-blue-400/20 via-cyan-400/10 to-transparent blur-2xl"></div>
+
+            <div className="relative rounded-[2.5rem] border border-white/80 bg-white/60 p-4 shadow-2xl backdrop-blur-xl">
+              <div className="overflow-hidden rounded-[1.5rem] bg-white">
                 <img
                   src={healthcareTeamImage}
                   alt="Healthcare professionals team"
-                  className="h-[320px] lg:h-[420px] w-full rounded-[1.5rem] object-cover"
+                  className="h-[320px] w-full rounded-[1.5rem] object-cover lg:h-[420px]"
                 />
               </div>
             </div>
 
-            <div className="absolute -bottom-4 -left-4 sm:-bottom-6 sm:-left-6 hidden rounded-2xl border border-slate-200/50 bg-white/95 backdrop-blur p-4 shadow-xl lg:block hover:shadow-2xl transition duration-200 z-10">
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 p-2">
-                  <ShieldCheck className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-900">Secure Role Access</p>
-                  <p className="text-xs text-slate-500">Admin • Doctor • Patient</p>
+            <div
+              data-aos="zoom-in"
+              data-aos-delay="350"
+              data-aos-duration="700"
+              className="absolute -bottom-4 -left-4 z-10 hidden lg:block sm:-bottom-6 sm:-left-6"
+            >
+              <div className="rounded-2xl border border-slate-200/50 bg-white/95 p-4 shadow-xl backdrop-blur transition duration-200 hover:shadow-2xl">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 p-2">
+                    <ShieldCheck className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">Secure Role Access</p>
+                    <p className="text-xs text-slate-500">Admin • Doctor • Patient</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div className="absolute -right-4 top-6 sm:-right-6 sm:top-8 hidden rounded-2xl border border-slate-200/50 bg-white/95 backdrop-blur p-4 shadow-xl lg:block hover:shadow-2xl transition duration-200 z-10">
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 p-2">
-                  <MailCheck className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-900">Email Verification</p>
-                  <p className="text-xs text-slate-500">OTP-based</p>
+            <div
+              data-aos="zoom-in"
+              data-aos-delay="450"
+              data-aos-duration="700"
+              className="absolute -right-4 top-6 z-10 hidden lg:block sm:-right-6 sm:top-8"
+            >
+              <div className="rounded-2xl border border-slate-200/50 bg-white/95 p-4 shadow-xl backdrop-blur transition duration-200 hover:shadow-2xl">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-xl bg-gradient-to-br from-emerald-50 to-teal-50 p-2">
+                    <MailCheck className="h-5 w-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">Email Verification</p>
+                    <p className="text-xs text-slate-500">OTP-based</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -259,13 +303,16 @@ const HomePage = () => {
       </section>
 
       <section id="features" className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
-        <div className="mx-auto max-w-3xl text-center">
-          <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-bold text-blue-700 border border-blue-100/50">
-            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+        <div className="mx-auto max-w-3xl text-center" data-aos="fade-up" data-aos-duration="800">
+          <span className="inline-flex items-center gap-2 rounded-full border border-blue-100/50 bg-blue-50 px-4 py-1.5 text-xs font-bold text-blue-700">
+            <div className="h-2 w-2 rounded-full bg-blue-600"></div>
             Core Features
           </span>
           <h2 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-            Everything needed for a <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">professional system</span>
+            Everything needed for a{' '}
+            <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+              professional system
+            </span>
           </h2>
           <p className="mt-4 text-lg leading-8 text-slate-600">
             Built to support structured authentication, user verification, approval flows,
@@ -274,20 +321,24 @@ const HomePage = () => {
         </div>
 
         <div className="mt-16 grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-          {features.map((feature) => {
+          {features.map((feature, index) => {
             const Icon = feature.icon;
 
             return (
               <div
                 key={feature.title}
-                className="group rounded-2xl border border-slate-200/50 bg-white/60 backdrop-blur p-8 shadow-md hover:shadow-xl transition duration-300 hover:-translate-y-1 hover:border-blue-200/50"
+                data-aos="fade-up"
+                data-aos-delay={index * 100}
+                data-aos-duration="700"
               >
-                <div className="inline-flex rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 p-3 group-hover:scale-110 transition duration-300">
-                  <Icon className="h-6 w-6 text-blue-600" />
-                </div>
+                <div className="group rounded-2xl border border-slate-200/50 bg-white/60 p-8 shadow-md backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-blue-200/50 hover:shadow-xl">
+                  <div className="inline-flex rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 p-3 transition duration-300 group-hover:scale-110">
+                    <Icon className="h-6 w-6 text-blue-600" />
+                  </div>
 
-                <h3 className="mt-6 text-lg font-bold text-slate-900">{feature.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">{feature.description}</p>
+                  <h3 className="mt-6 text-lg font-bold text-slate-900">{feature.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">{feature.description}</p>
+                </div>
               </div>
             );
           })}
@@ -295,13 +346,16 @@ const HomePage = () => {
       </section>
 
       <section id="roles" className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
-        <div className="mx-auto max-w-3xl text-center">
-          <span className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-4 py-1.5 text-xs font-bold text-blue-700 border border-blue-100/50">
-            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+        <div className="mx-auto max-w-3xl text-center" data-aos="fade-up" data-aos-duration="800">
+          <span className="inline-flex items-center gap-2 rounded-full border border-blue-100/50 bg-blue-50 px-4 py-1.5 text-xs font-bold text-blue-700">
+            <div className="h-2 w-2 rounded-full bg-blue-600"></div>
             Platform Roles
           </span>
           <h2 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-            Designed for <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">every user</span>
+            Designed for{' '}
+            <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+              every user
+            </span>
           </h2>
           <p className="mt-4 text-lg leading-8 text-slate-600">
             Each user role receives structured access, relevant permissions, and its own
@@ -310,20 +364,24 @@ const HomePage = () => {
         </div>
 
         <div className="mt-16 grid gap-8 lg:grid-cols-3">
-          {roles.map((role) => {
+          {roles.map((role, index) => {
             const Icon = role.icon;
 
             return (
               <div
                 key={role.title}
-                className="group rounded-2xl border border-slate-200/50 bg-gradient-to-br from-white to-slate-50/50 p-8 shadow-md hover:shadow-xl transition duration-300 hover:-translate-y-1 hover:border-blue-200/50"
+                data-aos="fade-up"
+                data-aos-delay={index * 120}
+                data-aos-duration="700"
               >
-                <div className="inline-flex rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 p-3 group-hover:scale-110 transition duration-300">
-                  <Icon className="h-6 w-6 text-blue-600" />
-                </div>
+                <div className="group rounded-2xl border border-slate-200/50 bg-gradient-to-br from-white to-slate-50/50 p-8 shadow-md transition duration-300 hover:-translate-y-1 hover:border-blue-200/50 hover:shadow-xl">
+                  <div className="inline-flex rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 p-3 transition duration-300 group-hover:scale-110">
+                    <Icon className="h-6 w-6 text-blue-600" />
+                  </div>
 
-                <h3 className="mt-6 text-2xl font-bold text-slate-900">{role.title}</h3>
-                <p className="mt-4 text-sm leading-7 text-slate-600">{role.description}</p>
+                  <h3 className="mt-6 text-2xl font-bold text-slate-900">{role.title}</h3>
+                  <p className="mt-4 text-sm leading-7 text-slate-600">{role.description}</p>
+                </div>
               </div>
             );
           })}
@@ -332,13 +390,16 @@ const HomePage = () => {
 
       <section id="workflow" className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
         <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-1.5 text-xs font-bold text-slate-700 border border-slate-200/50">
-              <div className="w-2 h-2 bg-slate-600 rounded-full"></div>
+          <div data-aos="fade-right" data-aos-duration="800">
+            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200/50 bg-slate-100 px-4 py-1.5 text-xs font-bold text-slate-700">
+              <div className="h-2 w-2 rounded-full bg-slate-600"></div>
               System Workflow
             </span>
             <h2 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-              <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Clear and secure</span> onboarding flow
+              <span className="bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                Clear and secure
+              </span>{' '}
+              onboarding flow
             </h2>
             <p className="mt-4 text-lg leading-8 text-slate-600">
               From registration to dashboard access, the platform follows a structured
@@ -348,11 +409,17 @@ const HomePage = () => {
 
           <div className="space-y-5">
             {steps.map((item, index) => (
-              <div key={item.step} className="relative">
+              <div
+                key={item.step}
+                data-aos="fade-left"
+                data-aos-delay={index * 120}
+                data-aos-duration="700"
+                className="relative"
+              >
                 {index < steps.length - 1 && (
-                  <div className="absolute left-6 top-16 w-1 h-8 bg-gradient-to-b from-blue-300 to-transparent"></div>
+                  <div className="absolute left-6 top-16 h-8 w-1 bg-gradient-to-b from-blue-300 to-transparent"></div>
                 )}
-                <div className="rounded-2xl border border-slate-200/50 bg-white/60 backdrop-blur p-6 shadow-md hover:shadow-lg transition duration-300 hover:border-blue-200/50">
+                <div className="rounded-2xl border border-slate-200/50 bg-white/60 p-6 shadow-md backdrop-blur transition duration-300 hover:border-blue-200/50 hover:shadow-lg">
                   <div className="flex items-start gap-4">
                     <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 text-sm font-bold text-white shadow-lg">
                       {item.step}
@@ -370,40 +437,42 @@ const HomePage = () => {
         </div>
       </section>
 
-      <section className="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-20 text-white relative overflow-hidden">
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 py-20 text-white">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-400 rounded-full blur-3xl"></div>
+          <div className="absolute right-1/4 top-0 h-96 w-96 rounded-full bg-blue-400 blur-3xl"></div>
         </div>
-        
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 relative">
-          <div className="grid gap-8 rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 to-blue-500/10 backdrop-blur-xl p-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-center lg:p-14 shadow-2xl">
-            <div>
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-xs font-bold text-blue-100 border border-white/20">
-                <div className="w-2 h-2 bg-blue-300 rounded-full"></div>
-                Start Using the Platform
-              </span>
-              <h2 className="mt-6 text-4xl font-bold tracking-tight sm:text-5xl leading-tight">
-                Secure healthcare access starts here
-              </h2>
-              <p className="mt-4 max-w-2xl text-base leading-8 text-slate-200">
-                Register an account, verify your email, and access the right healthcare
-                dashboard based on your role. Professional healthcare management awaits.
-              </p>
-            </div>
 
-            <div className="flex flex-wrap gap-4 lg:justify-end">
-              <Link
-                to={APP_ROUTES.LOGIN}
-                className="rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-3 text-sm font-semibold text-white transition duration-200 hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl"
-              >
-                Login Now
-              </Link>
-              <Link
-                to={APP_ROUTES.REGISTER}
-                className="rounded-lg border border-white/30 bg-white/10 backdrop-blur px-6 py-3 text-sm font-semibold text-white transition duration-200 hover:bg-white/20 hover:border-white/50 shadow-lg"
-              >
-                Create Account
-              </Link>
+        <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
+          <div data-aos="zoom-in" data-aos-duration="850">
+            <div className="grid gap-8 rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 to-blue-500/10 p-10 shadow-2xl backdrop-blur-xl lg:grid-cols-[1.2fr_0.8fr] lg:items-center lg:p-14">
+              <div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-bold text-blue-100">
+                  <div className="h-2 w-2 rounded-full bg-blue-300"></div>
+                  Start Using the Platform
+                </span>
+                <h2 className="mt-6 text-4xl font-bold leading-tight tracking-tight sm:text-5xl">
+                  Secure healthcare access starts here
+                </h2>
+                <p className="mt-4 max-w-2xl text-base leading-8 text-slate-200">
+                  Register an account, verify your email, and access the right healthcare
+                  dashboard based on your role. Professional healthcare management awaits.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-4 lg:justify-end">
+                <Link
+                  to={APP_ROUTES.LOGIN}
+                  className="rounded-lg bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition duration-200 hover:from-blue-600 hover:to-blue-700 hover:shadow-xl"
+                >
+                  Login Now
+                </Link>
+                <Link
+                  to={APP_ROUTES.REGISTER}
+                  className="rounded-lg border border-white/30 bg-white/10 px-6 py-3 text-sm font-semibold text-white shadow-lg backdrop-blur transition duration-200 hover:border-white/50 hover:bg-white/20"
+                >
+                  Create Account
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -411,10 +480,14 @@ const HomePage = () => {
 
       <footer id="footer" className="border-t border-slate-200/50 bg-gradient-to-b from-white to-slate-50/50">
         <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
-          <div className="grid gap-12 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]">
+          <div
+            data-aos="fade-up"
+            data-aos-duration="800"
+            className="grid gap-12 lg:grid-cols-[1.2fr_0.8fr_0.8fr_0.8fr]"
+          >
             <div>
-              <span className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-50 to-cyan-50 px-4 py-1.5 text-xs font-bold text-blue-700 border border-blue-100/50">
-                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-blue-100/50 bg-gradient-to-r from-blue-50 to-cyan-50 px-4 py-1.5 text-xs font-bold text-blue-700">
+                <div className="h-2 w-2 rounded-full bg-blue-600"></div>
                 Smart Healthcare Platform
               </span>
 
@@ -424,16 +497,16 @@ const HomePage = () => {
               </p>
 
               <div className="mt-8 space-y-4 text-sm text-slate-600">
-                <div className="flex items-center gap-3 hover:text-blue-600 transition duration-200">
-                  <Phone className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                <div className="flex items-center gap-3 transition duration-200 hover:text-blue-600">
+                  <Phone className="h-5 w-5 flex-shrink-0 text-blue-600" />
                   <span>+94 71 234 5678</span>
                 </div>
-                <div className="flex items-center gap-3 hover:text-blue-600 transition duration-200">
-                  <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                <div className="flex items-center gap-3 transition duration-200 hover:text-blue-600">
+                  <MapPin className="h-5 w-5 flex-shrink-0 text-blue-600" />
                   <span>Colombo, Sri Lanka</span>
                 </div>
-                <div className="flex items-center gap-3 hover:text-blue-600 transition duration-200">
-                  <Clock3 className="h-5 w-5 text-blue-600 flex-shrink-0" />
+                <div className="flex items-center gap-3 transition duration-200 hover:text-blue-600">
+                  <Clock3 className="h-5 w-5 flex-shrink-0 text-blue-600" />
                   <span>Mon - Fri | 8.00 AM - 6.00 PM</span>
                 </div>
               </div>
@@ -445,7 +518,9 @@ const HomePage = () => {
               </h3>
               <ul className="mt-6 space-y-3 text-sm text-slate-600">
                 {footerLinks.platform.map((item) => (
-                  <li key={item} className="hover:text-blue-600 transition duration-200 cursor-pointer">{item}</li>
+                  <li key={item} className="cursor-pointer transition duration-200 hover:text-blue-600">
+                    {item}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -456,7 +531,9 @@ const HomePage = () => {
               </h3>
               <ul className="mt-6 space-y-3 text-sm text-slate-600">
                 {footerLinks.roles.map((item) => (
-                  <li key={item} className="hover:text-blue-600 transition duration-200 cursor-pointer">{item}</li>
+                  <li key={item} className="cursor-pointer transition duration-200 hover:text-blue-600">
+                    {item}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -467,7 +544,9 @@ const HomePage = () => {
               </h3>
               <ul className="mt-6 space-y-3 text-sm text-slate-600">
                 {footerLinks.support.map((item) => (
-                  <li key={item} className="hover:text-blue-600 transition duration-200 cursor-pointer">{item}</li>
+                  <li key={item} className="cursor-pointer transition duration-200 hover:text-blue-600">
+                    {item}
+                  </li>
                 ))}
               </ul>
             </div>
