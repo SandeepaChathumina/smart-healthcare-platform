@@ -1,10 +1,5 @@
 import { createContext, useEffect, useMemo, useState } from 'react';
-import {
-  clearAuthData,
-  getAuthData,
-  hasRole as hasStoredRole,
-  setAuthData,
-} from '../utils/authStorage';
+import { clearAuthData, getAuthData, setAuthData } from '../utils/authStorage';
 import { loginUser, logoutUser } from '../services/authService';
 
 export const AuthContext = createContext(null);
@@ -37,7 +32,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await logoutUser();
     } catch (error) {
-      // Ignore logout API failure and still clear local state
+      // keep silent and still logout locally
     } finally {
       clearAuthData();
       setAuth(null);
@@ -45,6 +40,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const updateUser = (updatedUser) => {
+    if (!auth) return;
+
     const updatedAuth = {
       ...auth,
       user: updatedUser,
@@ -74,7 +71,6 @@ export const AuthProvider = ({ children }) => {
       logout,
       updateUser,
       hasRole,
-      hasStoredRole,
     }),
     [auth, user, token, loading, isAuthenticated]
   );
