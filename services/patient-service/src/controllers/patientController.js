@@ -2,6 +2,7 @@ const PatientReport = require('../models/PatientReport');
 const MedicalHistory = require('../models/MedicalHistory');
 const mongoose = require('mongoose');
 
+const path = require("path");
 // Removed User model dependency to fully decouple patient service
 const Appointment = require('../models/Appointment');
 
@@ -356,6 +357,28 @@ exports.getPrescriptionById = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+exports.downloadReport = async (req, res) => {
+  try {
+    const report = await PatientReport.findOne({
+      _id: req.params.id,
+      patientId: req.user.id,
+      isDeleted: false
+    });
+
+    if (!report) {
+      return res.status(404).json({ message: "Report not found" });
+    }
+
+    const filePath = path.resolve(report.filePath);
+    return res.download(filePath, report.fileName);
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error",
       error: error.message
     });
   }

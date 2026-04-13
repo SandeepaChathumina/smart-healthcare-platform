@@ -11,7 +11,8 @@ const {
   getAppointmentHistory,
   getAppointmentById,
   getPrescriptions,
-  getPrescriptionById
+  getPrescriptionById,
+  downloadReport
 } = require('../controllers/patientController');
 
 const router = express.Router();
@@ -36,5 +37,7 @@ router.get('/appointments/:id', getAppointmentById);
 // Prescription routes
 router.get('/prescriptions', getPrescriptions);
 router.get('/prescriptions/:id', getPrescriptionById);
+
+router.get('/reports/download/:id', protect, authorizeRoles('Patient'), downloadReport);
 
 module.exports = router;
