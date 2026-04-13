@@ -3,17 +3,22 @@ const jwt = require("jsonwebtoken");
 const protect = async (req, res, next) => {
   let token;
 
-  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer ")
+  ) {
     try {
       token = req.headers.authorization.split(" ")[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       req.user = {
-        id: decoded.id,
+        id: decoded.id || decoded._id || decoded.userId,
         role: decoded.role,
       };
       return next();
     } catch (error) {
-      return res.status(401).json({ message: "Not authorized, token failed or expired" });
+      return res
+        .status(401)
+        .json({ message: "Not authorized, token failed or expired" });
     }
   }
 
@@ -23,7 +28,11 @@ const protect = async (req, res, next) => {
 const authorizeRoles = (...roles) => {
   return (req, res, next) => {
     if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ message: `Access denied. Required role: ${roles.join(" or ")}` });
+      return res
+        .status(403)
+        .json({
+          message: `Access denied. Required role: ${roles.join(" or ")}`,
+        });
     }
     next();
   };
