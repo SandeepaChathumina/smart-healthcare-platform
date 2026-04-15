@@ -33,6 +33,15 @@ export const APP_ROUTES = {
   PATIENT_BOOK_APPOINTMENT: "/patient/appointments/book",
   PATIENT_APPOINTMENTS: "/patient/appointments",
   PATIENT_APPOINTMENT_DETAILS: "/patient/appointments/:id",
+  PATIENT_PAYMENT: "/patient/appointments/:id/pay",
+  PATIENT_TELEMEDICINE: "/patient/telemedicine/:sessionId",
+
+  // New Patient Routes
+  PATIENT_UPLOAD_REPORT: "/patient/reports/upload",
+  PATIENT_VIEW_REPORTS: "/patient/reports",
+  PATIENT_MEDICAL_HISTORY: "/patient/medical-history",
+  PATIENT_PRESCRIPTIONS: "/patient/prescriptions",
+  PATIENT_PRESCRIPTION_DETAILS: "/patient/prescriptions/:id",
 
   DOCTOR_APPOINTMENTS: "/doctor/appointments",
   DOCTOR_APPOINTMENT_DETAILS: "/doctor/appointments/:id",
