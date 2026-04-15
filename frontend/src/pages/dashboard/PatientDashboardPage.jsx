@@ -1,27 +1,131 @@
+import { Link } from 'react-router-dom';
+import { FileText, Upload, Calendar, Heart, Activity, FilePlus, Eye } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import useAuth from '../../hooks/useAuth';
+import { APP_ROUTES } from '../../constants/routes';
+
+const StatCard = ({ title, value, icon: Icon, linkTo, color }) => {
+  return (
+    <Link to={linkTo}>
+      <div className="group rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg">
+        <div className={`inline-flex rounded-xl ${color} p-3`}>
+          <Icon className="h-6 w-6" />
+        </div>
+        <h3 className="mt-4 text-2xl font-bold text-slate-900">{value}</h3>
+        <p className="text-sm text-slate-600">{title}</p>
+      </div>
+    </Link>
+  );
+};
 
 const PatientDashboardPage = () => {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
+
+  // These will be fetched from API in real implementation
+  const stats = {
+    totalReports: 0,
+    totalAppointments: 0,
+    pendingAppointments: 0,
+    completedAppointments: 0,
+  };
+
+  const quickActions = [
+    {
+      title: 'Upload Report',
+      description: 'Upload medical reports, prescriptions, or lab results',
+      icon: Upload,
+      link: APP_ROUTES.PATIENT_UPLOAD_REPORT,
+      color: 'bg-blue-100 text-blue-600',
+    },
+    {
+      title: 'View Reports',
+      description: 'Access all your uploaded medical documents',
+      icon: Eye,
+      link: APP_ROUTES.PATIENT_VIEW_REPORTS,
+      color: 'bg-green-100 text-green-600',
+    },
+    {
+      title: 'Medical History',
+      description: 'Manage your health records and conditions',
+      icon: Heart,
+      link: APP_ROUTES.PATIENT_MEDICAL_HISTORY,
+      color: 'bg-purple-100 text-purple-600',
+    },
+    {
+      title: 'Book Appointment',
+      description: 'Schedule a consultation with a doctor',
+      icon: Calendar,
+      link: APP_ROUTES.PATIENT_BOOK_APPOINTMENT,
+      color: 'bg-amber-100 text-amber-600',
+    },
+  ];
 
   return (
     <DashboardLayout title="Patient Dashboard">
-      <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-        <p className="text-sm text-slate-600">Logged in patient details below.</p>
+      {/* Welcome Section */}
+      <div className="mb-8 rounded-3xl bg-gradient-to-r from-blue-600 to-blue-800 p-8 text-white">
+        <h2 className="text-2xl font-bold">Welcome back, {user?.fullName}!</h2>
+        <p className="mt-2 text-blue-100">
+          Manage your health records, view appointments, and stay connected with your healthcare providers.
+        </p>
+      </div>
 
-        <div className="mt-6 space-y-3 rounded-2xl bg-slate-100 p-6 text-sm text-slate-700">
-          <p><strong>ID:</strong> {user?.id}</p>
-          <p><strong>Full Name:</strong> {user?.fullName}</p>
-          <p><strong>Email:</strong> {user?.email}</p>
-          <p><strong>Phone:</strong> {user?.phone}</p>
-          <p><strong>Role:</strong> {user?.role}</p>
-          <p><strong>Verified:</strong> {String(user?.isVerified)}</p>
-          <p><strong>Account Status:</strong> {user?.accountStatus}</p>
-          <p className="break-all"><strong>Token:</strong> {token}</p>
+      {/* Stats Section */}
+      <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title="Total Reports"
+          value={stats.totalReports}
+          icon={FileText}
+          linkTo={APP_ROUTES.PATIENT_VIEW_REPORTS}
+          color="bg-blue-100 text-blue-600"
+        />
+        <StatCard
+          title="Total Appointments"
+          value={stats.totalAppointments}
+          icon={Calendar}
+          linkTo={APP_ROUTES.PATIENT_APPOINTMENTS}
+          color="bg-green-100 text-green-600"
+        />
+        <StatCard
+          title="Pending Appointments"
+          value={stats.pendingAppointments}
+          icon={Activity}
+          linkTo={APP_ROUTES.PATIENT_APPOINTMENTS}
+          color="bg-amber-100 text-amber-600"
+        />
+        <StatCard
+          title="Completed"
+          value={stats.completedAppointments}
+          icon={FilePlus}
+          linkTo={APP_ROUTES.PATIENT_APPOINTMENTS}
+          color="bg-purple-100 text-purple-600"
+        />
+      </div>
+
+      {/* Quick Actions */}
+      <div>
+        <h3 className="mb-4 text-xl font-bold text-slate-900">Quick Actions</h3>
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link
+                key={action.title}
+                to={action.link}
+                className="group rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
+              >
+                <div className={`inline-flex rounded-xl ${action.color} p-3`}>
+                  <Icon className="h-6 w-6" />
+                </div>
+                <h4 className="mt-4 font-bold text-slate-900">{action.title}</h4>
+                <p className="mt-1 text-sm text-slate-600">{action.description}</p>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </DashboardLayout>
   );
 };
 
-export default PatientDashboardPage;
+export default PatientDashboardPage;MedicalHistoryPage.jsx

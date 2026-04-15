@@ -28,7 +28,9 @@ import BookAppointmentPage from "./pages/appointments/BookAppointmentPage";
 import PatientAppointmentsPage from "./pages/appointments/PatientAppointmentsPage";
 import DoctorAppointmentsPage from "./pages/appointments/DoctorAppointmentsPage";
 import AppointmentDetailsPage from "./pages/appointments/AppointmentDetailsPage";
-
+import UploadReportPage from "./pages/patient/UploadReportPage";
+import ViewReportsPage from "./pages/patient/ViewReportsPage";
+import MedicalHistoryPage from "./pages/patient/MedicalHistoryPage";
 function App() {
   return (
     <Routes>
@@ -171,6 +173,7 @@ function App() {
           </Route>
         </Route>
       </Route>
+      
 
       <Route
         path={APP_ROUTES.ADMIN_ALL_USERS}
@@ -185,6 +188,26 @@ function App() {
       >
         <Route index element={<DoctorsPage />} />
       </Route>
+      <Route
+  path={APP_ROUTES.PATIENT_UPLOAD_REPORT}
+  element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
+>
+  <Route index element={<UploadReportPage />} />
+</Route>
+
+<Route
+  path={APP_ROUTES.PATIENT_VIEW_REPORTS}
+  element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
+>
+  <Route index element={<ViewReportsPage />} />
+</Route>
+
+<Route
+  path={APP_ROUTES.PATIENT_MEDICAL_HISTORY}
+  element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
+>
+  <Route index element={<MedicalHistoryPage />} />
+</Route>
 
       <Route
         path={APP_ROUTES.ADMIN_PATIENTS}
@@ -196,6 +219,7 @@ function App() {
       <Route path={APP_ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
       <Route path="*" element={<Navigate to={APP_ROUTES.HOME} replace />} />
     </Routes>
+    
   );
 }
 

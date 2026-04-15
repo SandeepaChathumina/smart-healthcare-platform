@@ -36,4 +36,11 @@ export const APP_ROUTES = {
 
   DOCTOR_APPOINTMENTS: "/doctor/appointments",
   DOCTOR_APPOINTMENT_DETAILS: "/doctor/appointments/:id",
+
+
+  // Patient Module Routes (add these)
+  PATIENT_UPLOAD_REPORT: "/patient/reports/upload",
+  PATIENT_VIEW_REPORTS: "/patient/reports",
+  PATIENT_MEDICAL_HISTORY: "/patient/medical-history",
 };
+
