@@ -29,11 +29,18 @@ import PatientAppointmentsPage from "./pages/appointments/PatientAppointmentsPag
 import DoctorAppointmentsPage from "./pages/appointments/DoctorAppointmentsPage";
 import AppointmentDetailsPage from "./pages/appointments/AppointmentDetailsPage";
 
+// New Patient Service Pages
+import UploadReportPage from "./pages/patient/UploadReportPage";
+import ViewReportsPage from "./pages/patient/ViewReportsPage";
+import MedicalHistoryPage from "./pages/patient/MedicalHistoryPage";
+import PrescriptionsPage from "./pages/patient/PrescriptionsPage";
+
 function App() {
   return (
     <Routes>
       <Route path={APP_ROUTES.HOME} element={<HomePage />} />
 
+      {/* Guest Routes - Only accessible when not logged in */}
       <Route element={<GuestRoute />}>
         <Route path={APP_ROUTES.LOGIN} element={<LoginPage />} />
         <Route path={APP_ROUTES.REGISTER} element={<RegisterPage />} />
@@ -52,7 +59,9 @@ function App() {
         />
       </Route>
 
+      {/* Protected Routes - Require authentication */}
       <Route element={<ProtectedRoute />}>
+        {/* Status Pages */}
         <Route
           path={APP_ROUTES.PENDING_APPROVAL}
           element={<PendingApprovalPage />}
@@ -62,8 +71,12 @@ function App() {
           element={<AccountBlockedPage />}
         />
 
+        {/* Verified Routes - Require email verification */}
         <Route element={<VerifiedRoute />}>
+          {/* Doctor Approval Route - Checks doctor approval status */}
           <Route element={<DoctorApprovalRoute />}>
+            
+            {/* Admin Routes */}
             <Route
               path={APP_ROUTES.ADMIN_DASHBOARD}
               element={<RoleProtectedRoute allowedRoles={["Admin"]} />}
@@ -72,36 +85,8 @@ function App() {
             </Route>
 
             <Route
-              path={APP_ROUTES.DOCTOR_DASHBOARD}
-              element={<RoleProtectedRoute allowedRoles={["Doctor"]} />}
-            >
-              <Route index element={<DoctorDashboardPage />} />
-            </Route>
-
-            <Route
-              path={APP_ROUTES.PATIENT_DASHBOARD}
-              element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
-            >
-              <Route index element={<PatientDashboardPage />} />
-            </Route>
-
-            <Route
               path={APP_ROUTES.ADMIN_PROFILE}
               element={<RoleProtectedRoute allowedRoles={["Admin"]} />}
-            >
-              <Route index element={<ProfilePage />} />
-            </Route>
-
-            <Route
-              path={APP_ROUTES.DOCTOR_PROFILE}
-              element={<RoleProtectedRoute allowedRoles={["Doctor"]} />}
-            >
-              <Route index element={<ProfilePage />} />
-            </Route>
-
-            <Route
-              path={APP_ROUTES.PATIENT_PROFILE}
-              element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
             >
               <Route index element={<ProfilePage />} />
             </Route>
@@ -114,10 +99,82 @@ function App() {
             </Route>
 
             <Route
+              path={APP_ROUTES.ADMIN_PENDING_DOCTORS}
+              element={<RoleProtectedRoute allowedRoles={["Admin"]} />}
+            >
+              <Route index element={<PendingDoctorsPage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.ADMIN_ALL_USERS}
+              element={<RoleProtectedRoute allowedRoles={["Admin"]} />}
+            >
+              <Route index element={<AllUsersPage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.ADMIN_DOCTORS}
+              element={<RoleProtectedRoute allowedRoles={["Admin"]} />}
+            >
+              <Route index element={<DoctorsPage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.ADMIN_PATIENTS}
+              element={<RoleProtectedRoute allowedRoles={["Admin"]} />}
+            >
+              <Route index element={<PatientsPage />} />
+            </Route>
+
+            {/* Doctor Routes */}
+            <Route
+              path={APP_ROUTES.DOCTOR_DASHBOARD}
+              element={<RoleProtectedRoute allowedRoles={["Doctor"]} />}
+            >
+              <Route index element={<DoctorDashboardPage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.DOCTOR_PROFILE}
+              element={<RoleProtectedRoute allowedRoles={["Doctor"]} />}
+            >
+              <Route index element={<ProfilePage />} />
+            </Route>
+
+            <Route
               path={APP_ROUTES.DOCTOR_PROFILE_EDIT}
               element={<RoleProtectedRoute allowedRoles={["Doctor"]} />}
             >
               <Route index element={<EditProfilePage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.DOCTOR_APPOINTMENTS}
+              element={<RoleProtectedRoute allowedRoles={["Doctor"]} />}
+            >
+              <Route index element={<DoctorAppointmentsPage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.DOCTOR_APPOINTMENT_DETAILS}
+              element={<RoleProtectedRoute allowedRoles={["Doctor"]} />}
+            >
+              <Route index element={<AppointmentDetailsPage />} />
+            </Route>
+
+            {/* Patient Routes */}
+            <Route
+              path={APP_ROUTES.PATIENT_DASHBOARD}
+              element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
+            >
+              <Route index element={<PatientDashboardPage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.PATIENT_PROFILE}
+              element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
+            >
+              <Route index element={<ProfilePage />} />
             </Route>
 
             <Route
@@ -127,13 +184,7 @@ function App() {
               <Route index element={<EditProfilePage />} />
             </Route>
 
-            <Route
-              path={APP_ROUTES.ADMIN_PENDING_DOCTORS}
-              element={<RoleProtectedRoute allowedRoles={["Admin"]} />}
-            >
-              <Route index element={<PendingDoctorsPage />} />
-            </Route>
-
+            {/* Patient Appointment Routes */}
             <Route
               path={APP_ROUTES.PATIENT_BOOK_APPOINTMENT}
               element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
@@ -155,45 +206,43 @@ function App() {
               <Route index element={<AppointmentDetailsPage />} />
             </Route>
 
+            {/* Patient Medical Service Routes */}
             <Route
-              path={APP_ROUTES.DOCTOR_APPOINTMENTS}
-              element={<RoleProtectedRoute allowedRoles={["Doctor"]} />}
+              path={APP_ROUTES.PATIENT_UPLOAD_REPORT}
+              element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
             >
-              <Route index element={<DoctorAppointmentsPage />} />
+              <Route index element={<UploadReportPage />} />
             </Route>
 
             <Route
-              path={APP_ROUTES.DOCTOR_APPOINTMENT_DETAILS}
-              element={<RoleProtectedRoute allowedRoles={["Doctor"]} />}
+              path={APP_ROUTES.PATIENT_VIEW_REPORTS}
+              element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
             >
-              <Route index element={<AppointmentDetailsPage />} />
+              <Route index element={<ViewReportsPage />} />
             </Route>
+
+            <Route
+              path={APP_ROUTES.PATIENT_MEDICAL_HISTORY}
+              element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
+            >
+              <Route index element={<MedicalHistoryPage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.PATIENT_PRESCRIPTIONS}
+              element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
+            >
+              <Route index element={<PrescriptionsPage />} />
+            </Route>
+
           </Route>
         </Route>
       </Route>
 
-      <Route
-        path={APP_ROUTES.ADMIN_ALL_USERS}
-        element={<RoleProtectedRoute allowedRoles={["Admin"]} />}
-      >
-        <Route index element={<AllUsersPage />} />
-      </Route>
-
-      <Route
-        path={APP_ROUTES.ADMIN_DOCTORS}
-        element={<RoleProtectedRoute allowedRoles={["Admin"]} />}
-      >
-        <Route index element={<DoctorsPage />} />
-      </Route>
-
-      <Route
-        path={APP_ROUTES.ADMIN_PATIENTS}
-        element={<RoleProtectedRoute allowedRoles={["Admin"]} />}
-      >
-        <Route index element={<PatientsPage />} />
-      </Route>
-
+      {/* Unauthorized Page - Access denied */}
       <Route path={APP_ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
+      
+      {/* Catch all - Redirect to home */}
       <Route path="*" element={<Navigate to={APP_ROUTES.HOME} replace />} />
     </Routes>
   );
