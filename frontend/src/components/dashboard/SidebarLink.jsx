@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom';
 
-const SidebarLink = ({ to, children }) => {
+const SidebarLink = ({ to, children, end = false }) => {
   return (
     <NavLink
       to={to}
+      end={end}
       className={({ isActive }) =>
         `block rounded-lg px-4 py-3 text-sm font-semibold transition duration-200 relative ${
           isActive

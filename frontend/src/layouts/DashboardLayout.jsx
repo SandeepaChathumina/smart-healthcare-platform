@@ -51,7 +51,7 @@ const DashboardLayout = ({ title, children }) => {
 
           <nav className="space-y-2">
             {links.map((link) => (
-              <SidebarLink key={link.path} to={link.path}>
+              <SidebarLink key={link.path} to={link.path} end={link.end}>
                 {link.label}
               </SidebarLink>
             ))}
