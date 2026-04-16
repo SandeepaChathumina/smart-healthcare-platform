@@ -16,6 +16,12 @@ const appointmentSchema = new mongoose.Schema(
       index: true,
     },
 
+    availabilityId: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+      description: "Reference to the doctor's availability slot that was booked",
+    },
+
     appointmentType: {
       type: String,
       required: [true, "Appointment type is required"],
