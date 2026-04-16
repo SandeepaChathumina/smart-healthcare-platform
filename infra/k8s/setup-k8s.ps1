@@ -4,6 +4,7 @@ kubectl delete secret doctor-service-secret --ignore-not-found
 kubectl delete secret appointment-service-secret --ignore-not-found
 kubectl delete secret notification-service-secret --ignore-not-found
 kubectl delete secret frontend-secret --ignore-not-found
+kubectl delete secret ai-feature-secret --ignore-not-found
 
 kubectl create secret generic auth-service-secret --from-env-file=auth.env
 kubectl create secret generic patient-service-secret --from-env-file=patient.env
@@ -11,6 +12,7 @@ kubectl create secret generic doctor-service-secret --from-env-file=doctor.env
 kubectl create secret generic appointment-service-secret --from-env-file=appointment.env
 kubectl create secret generic notification-service-secret --from-env-file=notification.env
 kubectl create secret generic frontend-secret --from-env-file=frontend.env
+kubectl create secret generic ai-feature-secret --from-env-file=aiFeature.env
 
 kubectl apply -f auth-deployment.yaml
 kubectl apply -f auth-service.yaml
@@ -29,6 +31,9 @@ kubectl apply -f notification-service.yaml
 
 kubectl apply -f frontend-deployment.yaml
 kubectl apply -f frontend-service.yaml
+
+kubectl apply -f ai-feature-deployment.yaml
+kubectl apply -f ai-feature-service.yaml
 
 kubectl get pods
 kubectl get services
