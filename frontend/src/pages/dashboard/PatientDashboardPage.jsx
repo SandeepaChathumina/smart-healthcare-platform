@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Upload, Calendar, Heart, Activity, FilePlus, Eye, ClipboardList, Stethoscope } from 'lucide-react';
+import { FileText, Upload, Calendar, Heart, Activity, FilePlus, Eye, ClipboardList, Stethoscope, Pill } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import useAuth from '../../hooks/useAuth';
 import { APP_ROUTES } from '../../constants/routes';
 import { getAllReports } from '../../services/patientService';
 import { getAppointmentsByPatient } from '../../services/appointmentService';
+import { getPrescriptionsByPatient } from '../../services/doctorService';
 
 const StatCard = ({ title, value, icon: Icon, linkTo, color }) => {
   return (
@@ -28,15 +29,17 @@ const PatientDashboardPage = () => {
     totalAppointments: 0,
     pendingAppointments: 0,
     completedAppointments: 0,
+    totalPrescriptions: 0,
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const [reportsResult, appointmentsResult] = await Promise.allSettled([
+        const [reportsResult, appointmentsResult, prescriptionsResult] = await Promise.allSettled([
           getAllReports(),
           getAppointmentsByPatient(user?.id),
+          getPrescriptionsByPatient(user?.id, { limit: 100 }),
         ]);
 
         const reportsData =
@@ -44,12 +47,15 @@ const PatientDashboardPage = () => {
         const appointmentsData =
           appointmentsResult.status === 'fulfilled' ? appointmentsResult.value : null;
         const appointments = appointmentsData?.appointments || [];
+        const prescriptionsData =
+          prescriptionsResult.status === 'fulfilled' ? prescriptionsResult.value : null;
         
         setStats({
           totalReports: reportsData?.total || reportsData?.reports?.length || 0,
           totalAppointments: appointments.length,
           pendingAppointments: appointments.filter(a => a.status === 'pending').length,
           completedAppointments: appointments.filter(a => a.status === 'completed').length,
+          totalPrescriptions: prescriptionsData?.prescriptions?.length || 0,
         });
       } catch (error) {
         console.error('Failed to load stats:', error);
@@ -106,6 +112,13 @@ const PatientDashboardPage = () => {
       link: APP_ROUTES.PATIENT_APPOINTMENTS,
       color: 'bg-indigo-100 text-indigo-600',
     },
+    {
+      title: 'Prescriptions',
+      description: 'View your prescriptions with related appointment details',
+      icon: Pill,
+      link: APP_ROUTES.PATIENT_PRESCRIPTIONS,
+      color: 'bg-rose-100 text-rose-600',
+    },
   ];
 
   return (
@@ -147,6 +160,13 @@ const PatientDashboardPage = () => {
           icon={FilePlus}
           linkTo={APP_ROUTES.PATIENT_APPOINTMENTS}
           color="bg-purple-100 text-purple-600"
+        />
+        <StatCard
+          title="Prescriptions"
+          value={loading ? '...' : stats.totalPrescriptions}
+          icon={Pill}
+          linkTo={APP_ROUTES.PATIENT_PRESCRIPTIONS}
+          color="bg-rose-100 text-rose-600"
         />
       </div>
 
