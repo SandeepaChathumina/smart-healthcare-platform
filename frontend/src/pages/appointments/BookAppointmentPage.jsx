@@ -7,9 +7,24 @@ import { getAllAvailabilitySlots } from "../../services/doctorService";
 
 const WEEKDAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
+const formatLocalDateInput = (value) => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getTodayLocal = () => formatLocalDateInput(new Date());
+
 const formatAvailabilityDay = (slot) => {
   if (slot.specificDate) {
-    return new Date(slot.specificDate).toLocaleDateString();
+    return new Date(slot.specificDate).toLocaleDateString("en-GB", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
   }
   return `Every ${WEEKDAY[slot.dayOfWeek]}`;
 };
@@ -20,7 +35,7 @@ const getRemaining = (slot) => {
 
 const getDefaultDateForSlot = (slot) => {
   if (slot.specificDate) {
-    return new Date(slot.specificDate).toISOString().split("T")[0];
+    return formatLocalDateInput(slot.specificDate);
   }
 
   const today = new Date();
@@ -29,7 +44,7 @@ const getDefaultDateForSlot = (slot) => {
   const targetDay = Number(slot.dayOfWeek);
   const diff = (targetDay - currentDay + 7) % 7;
   date.setDate(date.getDate() + diff);
-  return date.toISOString().split("T")[0];
+  return formatLocalDateInput(date);
 };
 
 const timeToMinutes = (value) => {
@@ -114,11 +129,16 @@ const BookAppointmentPage = () => {
 
       if (!searchDate) return true;
 
-      const selectedDate = new Date(searchDate);
+      const selectedDate = new Date(`${searchDate}T00:00:00`);
       if (Number.isNaN(selectedDate.getTime())) return true;
 
       if (slot.specificDate) {
-        return new Date(slot.specificDate).toDateString() === selectedDate.toDateString();
+        const slotDate = new Date(slot.specificDate);
+        return (
+          slotDate.getFullYear() === selectedDate.getFullYear() &&
+          slotDate.getMonth() === selectedDate.getMonth() &&
+          slotDate.getDate() === selectedDate.getDate()
+        );
       }
 
       return Number(slot.dayOfWeek) === selectedDate.getDay();
@@ -228,7 +248,7 @@ const BookAppointmentPage = () => {
               <input
                 type="date"
                 value={searchDate}
-                min={new Date().toISOString().split("T")[0]}
+                min={getTodayLocal()}
                 onChange={(e) => setSearchDate(e.target.value)}
                 className="rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
               />
@@ -337,7 +357,7 @@ const BookAppointmentPage = () => {
                 <input
                   type="date"
                   value={formData.appointmentDate}
-                  min={new Date().toISOString().split("T")[0]}
+                  min={getTodayLocal()}
                   disabled={Boolean(selectedSlot?.specificDate)}
                   onChange={(e) => setFormData((prev) => ({ ...prev, appointmentDate: e.target.value }))}
                   className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200 disabled:bg-slate-50"
