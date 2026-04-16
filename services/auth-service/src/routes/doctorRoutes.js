@@ -9,6 +9,8 @@ import {
 
 const router = express.Router();
 
+router.get('/patients/:id', getPatientByIdForDoctor);
+
 router.use(
   protect,
   authorizeRoles('Doctor'),
