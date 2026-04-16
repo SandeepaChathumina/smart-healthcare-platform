@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Upload, Calendar, Heart, Activity, FilePlus, Eye, Pill, Stethoscope } from 'lucide-react';
+import { FileText, Upload, Calendar, Heart, Activity, FilePlus, Eye, ClipboardList, Stethoscope } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import useAuth from '../../hooks/useAuth';
 import { APP_ROUTES } from '../../constants/routes';
@@ -34,15 +34,19 @@ const PatientDashboardPage = () => {
   useEffect(() => {
     const loadStats = async () => {
       try {
-        const [reportsData, appointmentsData] = await Promise.all([
+        const [reportsResult, appointmentsResult] = await Promise.allSettled([
           getAllReports(),
           getAppointmentsByPatient(user?.id),
         ]);
-        
-        const appointments = appointmentsData.appointments || [];
+
+        const reportsData =
+          reportsResult.status === 'fulfilled' ? reportsResult.value : null;
+        const appointmentsData =
+          appointmentsResult.status === 'fulfilled' ? appointmentsResult.value : null;
+        const appointments = appointmentsData?.appointments || [];
         
         setStats({
-          totalReports: reportsData.total || reportsData.reports?.length || 0,
+          totalReports: reportsData?.total || reportsData?.reports?.length || 0,
           totalAppointments: appointments.length,
           pendingAppointments: appointments.filter(a => a.status === 'pending').length,
           completedAppointments: appointments.filter(a => a.status === 'completed').length,
@@ -82,10 +86,10 @@ const PatientDashboardPage = () => {
       color: 'bg-purple-100 text-purple-600',
     },
     {
-      title: 'Prescriptions',
-      description: 'View your prescribed medications',
-      icon: Pill,
-      link: APP_ROUTES.PATIENT_PRESCRIPTIONS,
+      title: 'Consultation Notes',
+      description: 'View notes added by your doctor',
+      icon: ClipboardList,
+      link: APP_ROUTES.PATIENT_APPOINTMENTS,
       color: 'bg-amber-100 text-amber-600',
     },
     {

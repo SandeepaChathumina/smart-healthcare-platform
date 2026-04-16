@@ -117,6 +117,12 @@ const AppointmentCard = ({ appointment }) => {
           >
             View Details
           </Link>
+          <Link
+            to={`/doctor/appointments/${appointment._id}`}
+            className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-blue-700"
+          >
+            Consultant Notes
+          </Link>
         </div>
       </div>
     </div>
@@ -142,8 +148,35 @@ const UpcomingAppointmentsWidget = ({ appointments }) => {
       {upcoming.map((appointment) => (
         <div key={appointment._id} className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
           <div>
+            <p className="text-sm font-medium text-slate-900">Patient: {appointment.patientId}</p>
+            <p className="text-xs text-slate-500">
+              {new Date(appointment.preferredDateTime).toLocaleDateString()}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            {appointment.status === 'pending' && (
+              <button
+                onClick={() => onAccept(appointment._id)}
+                className="rounded-lg bg-green-600 px-2 py-1 text-xs text-white"
+              >
+                Accept
+              </button>
+            )}
+            <Link
+              to={`/doctor/appointments/${appointment._id}`}
+              className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
+            >
+              View
+            </Link>
+            <Link
+              to={`/doctor/appointments/${appointment._id}`}
+              className="rounded-lg bg-blue-600 px-2 py-1 text-xs text-white"
+            >
+              Notes
+            </Link>
             <p className="text-sm font-medium text-slate-900">Patient: {appointment.patientName || 'Patient'}</p>
             <p className="text-xs text-slate-500">{formatDateTime(appointment.scheduledDateTime || appointment.preferredDateTime)}</p>
+
           </div>
           <Link
             to={`/doctor/appointments/${appointment._id}`}
@@ -219,7 +252,7 @@ const DoctorDashboardPage = () => {
       title: 'Consultation Notes',
       description: 'Create and manage patient consultation records',
       icon: FileText,
-      link: '/doctor/consultations',
+      link: APP_ROUTES.DOCTOR_APPOINTMENTS,
       color: 'bg-green-100 text-green-600',
     },
     {

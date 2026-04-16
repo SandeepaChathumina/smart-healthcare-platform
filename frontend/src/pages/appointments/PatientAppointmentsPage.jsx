@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import useAuth from "../../hooks/useAuth";
 import { getAppointmentsByPatient } from "../../services/appointmentService";
+import { getConsultationNoteByAppointment } from "../../services/doctorService";
 
 const getStatusBadge = (status) => {
   const value = String(status || "").toLowerCase();
@@ -43,6 +44,7 @@ const PatientAppointmentsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("all");
+  const [consultationNotesByAppointment, setConsultationNotesByAppointment] = useState({});
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -58,6 +60,30 @@ const PatientAppointmentsPage = () => {
 
     if (user?.id) fetchAppointments();
   }, [user?.id]);
+
+  useEffect(() => {
+    const loadConsultationNotes = async () => {
+      if (!appointments.length) {
+        setConsultationNotesByAppointment({});
+        return;
+      }
+
+      const settled = await Promise.allSettled(
+        appointments.map((appointment) => getConsultationNoteByAppointment(appointment._id))
+      );
+
+      const notesMap = {};
+      settled.forEach((result, index) => {
+        if (result.status === "fulfilled" && result.value?.consultationNote) {
+          notesMap[appointments[index]._id] = result.value.consultationNote;
+        }
+      });
+
+      setConsultationNotesByAppointment(notesMap);
+    };
+
+    loadConsultationNotes();
+  }, [appointments]);
 
   const filteredAppointments = useMemo(() => {
     if (filter === "all") return appointments;
@@ -209,6 +235,15 @@ const PatientAppointmentsPage = () => {
                       </p>
                       <p className="mt-1 font-medium text-slate-700">
                         {appointment.doctorResponseNote || "No response yet"}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl bg-blue-50/50 p-3 sm:col-span-2">
+                      <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
+                        Consultant Notes
+                      </p>
+                      <p className="mt-1 font-medium text-slate-700">
+                        {consultationNotesByAppointment[appointment._id]?.notes || "Not available yet"}
                       </p>
                     </div>
                   </div>

@@ -1,15 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, FileText, X, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import PrimaryButton from '../../components/ui/PrimaryButton';
 import { uploadReport } from '../../services/patientService';
+import { getAppointmentsByPatient } from '../../services/appointmentService';
+import useAuth from '../../hooks/useAuth';
 import { APP_ROUTES } from '../../constants/routes';
 
 const UploadReportPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [file, setFile] = useState(null);
+  const [appointments, setAppointments] = useState([]);
+  const [appointmentsLoading, setAppointmentsLoading] = useState(true);
   const [formData, setFormData] = useState({
     reportTitle: '',
     reportType: 'Lab Report',
@@ -18,6 +23,26 @@ const UploadReportPage = () => {
   });
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState(null);
+
+  useEffect(() => {
+    const loadAppointments = async () => {
+      if (!user?.id) {
+        setAppointmentsLoading(false);
+        return;
+      }
+
+      try {
+        const data = await getAppointmentsByPatient(user.id);
+        setAppointments(data?.appointments || []);
+      } catch {
+        setAppointments([]);
+      } finally {
+        setAppointmentsLoading(false);
+      }
+    };
+
+    loadAppointments();
+  }, [user?.id]);
 
   const reportTypes = [
     'Lab Report',
@@ -103,6 +128,13 @@ const UploadReportPage = () => {
   const removeFile = () => {
     setFile(null);
     setPreview(null);
+  };
+
+  const formatDateTime = (value) => {
+    if (!value) return 'Not scheduled';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString();
   };
 
   return (
@@ -195,19 +227,30 @@ const UploadReportPage = () => {
             </select>
           </div>
           
-          {/* Appointment ID (Optional) */}
+          {/* Appointment Link (Optional) */}
           <div>
             <label className="mb-2 block text-sm font-semibold text-slate-700">
-              Appointment ID (Optional)
+              Link to Appointment (Optional)
             </label>
-            <input
-              type="text"
+            <select
               name="appointmentId"
               value={formData.appointmentId}
               onChange={handleChange}
-              placeholder="Link to a specific appointment"
               className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
+              disabled={appointmentsLoading}
+            >
+              <option value="">No appointment linked</option>
+              {appointments.map((appointment) => (
+                <option key={appointment._id} value={appointment._id}>
+                  {`Doctor ${appointment.doctorId} - ${appointment.reason || 'Consultation'} - ${formatDateTime(
+                    appointment.scheduledDateTime || appointment.preferredDateTime
+                  )}`}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-slate-500">
+              The uploaded report will store doctor and appointment details from this selection.
+            </p>
           </div>
           
           {/* Description */}
