@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
@@ -15,9 +15,15 @@ import {
   Phone,
   MapPin,
   Clock3,
+  Bot,
+  X,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { APP_ROUTES } from '../../constants/routes.js';
 import healthcareTeamImage from '../../assets/successful-medical-team.jpg';
+
+const AI_FEATURE_BASE_URL = import.meta.env.VITE_AI_FEATURE_BASE_URL;
 
 const stats = [
   { label: 'Verified Access Flow', value: '100%' },
@@ -120,6 +126,18 @@ const footerLinks = {
 };
 
 const HomePage = () => {
+  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
+  const [isSubmittingAi, setIsSubmittingAi] = useState(false);
+  const [aiError, setAiError] = useState('');
+  const [aiResult, setAiResult] = useState(null);
+
+  const [aiForm, setAiForm] = useState({
+    symptoms: '',
+    age: '',
+    gender: '',
+    medicalHistory: '',
+  });
+
   useEffect(() => {
     AOS.init({
       duration: 900,
@@ -129,6 +147,92 @@ const HomePage = () => {
       mirror: false,
     });
   }, []);
+
+  const openAiModal = () => {
+    setIsAiModalOpen(true);
+  };
+
+  const closeAiModal = () => {
+    setIsAiModalOpen(false);
+    setIsSubmittingAi(false);
+    setAiError('');
+    setAiResult(null);
+    setAiForm({
+      symptoms: '',
+      age: '',
+      gender: '',
+      medicalHistory: '',
+    });
+  };
+
+  const handleAiInputChange = (e) => {
+    const { name, value } = e.target;
+    setAiForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleAiSubmit = async (e) => {
+    e.preventDefault();
+    setAiError('');
+    setAiResult(null);
+
+    if (!aiForm.symptoms.trim()) {
+      setAiError('Please enter at least one symptom.');
+      return;
+    }
+
+    if (!aiForm.age || Number(aiForm.age) <= 0) {
+      setAiError('Please enter a valid age.');
+      return;
+    }
+
+    if (!aiForm.gender.trim()) {
+      setAiError('Please select a gender.');
+      return;
+    }
+
+    if (!AI_FEATURE_BASE_URL) {
+      setAiError('AI feature base URL is not configured.');
+      return;
+    }
+
+    try {
+      setIsSubmittingAi(true);
+
+      const payload = {
+        symptoms: aiForm.symptoms
+          .split(',')
+          .map((item) => item.trim())
+          .filter(Boolean),
+        age: Number(aiForm.age),
+        gender: aiForm.gender,
+        medicalHistory: aiForm.medicalHistory.trim() || 'No major medical history provided',
+      };
+
+      const response = await fetch(`${AI_FEATURE_BASE_URL}/api/symptoms/check`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setAiError(data.message || 'Unable to get symptom analysis right now.');
+        return;
+      }
+
+      setAiResult(data.data);
+    } catch (error) {
+      setAiError('Unable to connect to the AI symptom checker service.');
+    } finally {
+      setIsSubmittingAi(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 text-slate-900">
@@ -558,6 +662,206 @@ const HomePage = () => {
           </div>
         </div>
       </footer>
+
+      <button
+        type="button"
+        onClick={openAiModal}
+        className="fixed bottom-6 right-6 z-50 inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-blue-600 to-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-2xl transition duration-300 hover:scale-105 hover:shadow-blue-200"
+      >
+        <Bot className="h-5 w-5" />
+        AI Symptom Checker
+      </button>
+
+      {isAiModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm">
+          <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-2xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-3xl border-b border-slate-200 bg-white px-6 py-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">AI Symptom Checker</h2>
+                <p className="text-sm text-slate-500">
+                  Enter symptoms and basic details to get a quick analysis.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeAiModal}
+                className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              <form onSubmit={handleAiSubmit} className="space-y-5">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Symptoms
+                  </label>
+                  <textarea
+                    name="symptoms"
+                    value={aiForm.symptoms}
+                    onChange={handleAiInputChange}
+                    rows={4}
+                    placeholder="Example: fever, cough, sore throat, headache"
+                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Age
+                    </label>
+                    <input
+                      type="number"
+                      name="age"
+                      value={aiForm.age}
+                      onChange={handleAiInputChange}
+                      placeholder="Enter age"
+                      className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-slate-700">
+                      Gender
+                    </label>
+                    <select
+                      name="gender"
+                      value={aiForm.gender}
+                      onChange={handleAiInputChange}
+                      className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                    >
+                      <option value="">Select gender</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Medical History
+                  </label>
+                  <textarea
+                    name="medicalHistory"
+                    value={aiForm.medicalHistory}
+                    onChange={handleAiInputChange}
+                    rows={3}
+                    placeholder="Example: no major chronic illness"
+                    className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                  />
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="submit"
+                    disabled={isSubmittingAi}
+                    className="inline-flex items-center rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 px-5 py-3 text-sm font-semibold text-white shadow-lg transition duration-200 hover:from-blue-700 hover:to-cyan-700 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {isSubmittingAi ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Checking...
+                      </>
+                    ) : (
+                      'Check Symptoms'
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={closeAiModal}
+                    className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    Close
+                  </button>
+                </div>
+              </form>
+
+              {aiError && (
+                <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
+                    <div>
+                      <p className="text-sm font-semibold text-red-700">Service Error</p>
+                      <p className="mt-1 text-sm text-red-600">{aiError}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {aiResult && (
+                <div className="mt-6 space-y-4">
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                    <p className="text-sm font-semibold text-emerald-700">
+                      Symptom analysis generated successfully
+                    </p>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Possible Condition
+                      </p>
+                      <p className="mt-2 text-sm font-medium text-slate-800">
+                        {aiResult.possibleCondition}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Recommended Specialty
+                      </p>
+                      <p className="mt-2 text-sm font-medium text-slate-800">
+                        {aiResult.recommendedSpecialty}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 md:col-span-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        Urgency Level
+                      </p>
+                      <p className="mt-2 text-sm font-bold text-blue-700">
+                        {aiResult.urgencyLevel}
+                      </p>
+                    </div>
+                  </div>
+
+                  {Array.isArray(aiResult.selfCareAdvice) && aiResult.selfCareAdvice.length > 0 && (
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                      <h3 className="text-sm font-bold text-slate-900">Self Care Advice</h3>
+                      <ul className="mt-3 space-y-2 text-sm text-slate-600">
+                        {aiResult.selfCareAdvice.map((item, index) => (
+                          <li key={index} className="flex gap-2">
+                            <span className="mt-1 h-2 w-2 rounded-full bg-blue-600"></span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {Array.isArray(aiResult.warningSigns) && aiResult.warningSigns.length > 0 && (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                      <h3 className="text-sm font-bold text-amber-800">Warning Signs</h3>
+                      <ul className="mt-3 space-y-2 text-sm text-amber-700">
+                        {aiResult.warningSigns.map((item, index) => (
+                          <li key={index} className="flex gap-2">
+                            <span className="mt-1 h-2 w-2 rounded-full bg-amber-500"></span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

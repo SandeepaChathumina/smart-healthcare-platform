@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-feature-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-feature-service
+  template:
+    metadata:
+      labels:
+        app: ai-feature-service
+    spec:
+      containers:
+        - name: ai-feature-service
+          image: docker-ai-feature:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5020
+          envFrom:
+            - secretRef:
+                name: ai-feature-secret
