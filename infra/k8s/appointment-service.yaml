@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: appointment-service
+spec:
+  selector:
+    app: appointment-service
+  ports:
+    - protocol: TCP
+      port: 5004
+      targetPort: 5004
+      nodePort: 30004
+  type: NodePort

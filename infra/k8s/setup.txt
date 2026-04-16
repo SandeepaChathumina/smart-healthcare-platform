@@ -1,0 +1,19 @@
+kubectl create secret generic auth-service-secret --from-env-file=auth.env
+kubectl create secret generic patient-service-secret --from-env-file=patient.env
+kubectl create secret generic doctor-service-secret --from-env-file=doctor.env
+kubectl create secret generic appointment-service-secret --from-env-file=appointment.env
+kubectl create secret generic notification-service-secret --from-env-file=notification.env
+kubectl create secret generic frontend-secret --from-env-file=frontend.env
+
+kubectl apply -f auth-deployment.yaml
+kubectl apply -f auth-service.yaml
+kubectl apply -f patient-deployment.yaml
+kubectl apply -f patient-service.yaml
+kubectl apply -f doctor-deployment.yaml
+kubectl apply -f doctor-service.yaml
+kubectl apply -f appointment-deployment.yaml
+kubectl apply -f appointment-service.yaml
+kubectl apply -f notification-deployment.yaml
+kubectl apply -f notification-service.yaml
+kubectl apply -f frontend-deployment.yaml
+kubectl apply -f frontend-service.yaml

@@ -1,6 +1,6 @@
 import axios from '../lib/axios';
 
-const APPOINTMENT_BASE_URL = import.meta.env.VITE_APPOINTMENT_BASE_URL || 'http://localhost:5004';
+const APPOINTMENT_BASE_URL = import.meta.env.VITE_APPOINTMENT_BASE_URL;
 
 export const createAppointment = async (payload) => {
   const response = await axios.post(`${APPOINTMENT_BASE_URL}/api/appointments`, payload);
