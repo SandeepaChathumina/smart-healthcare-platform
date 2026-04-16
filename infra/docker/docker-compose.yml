@@ -42,6 +42,7 @@ services:
       - MONGO_URI=${APPOINTMENT_MONGO_URI}
       - JWT_SECRET=${JWT_SECRET}
       - INTERNAL_SERVICE_API_KEY=${INTERNAL_SERVICE_API_KEY}
+      - DOCTOR_SERVICE_URL=http://doctor-service:5003/api/doctor
     # depends_on:
     #   - mongo
 
