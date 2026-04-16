@@ -53,13 +53,15 @@ const formatDateTime = (value) => {
   if (!value) return "Not scheduled yet";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
+
   return date.toLocaleString("en-GB", {
+    timeZone: "Asia/Colombo",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-    hour12: false,
+    hour12: true,
   });
 };
 
@@ -73,12 +75,26 @@ const formatDate = (value) => {
 
 const toDateTimeLocal = (value) => {
   if (!value) return "";
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
-    date.getHours()
-  )}:${pad(date.getMinutes())}`;
+
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Colombo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(date).reduce((acc, part) => {
+    acc[part.type] = part.value;
+    return acc;
+  }, {});
+
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
 };
 
 const formatType = (type) => {
@@ -696,6 +712,26 @@ const AppointmentDetailsPage = () => {
   }, [id]);
 
   const submitDoctorAction = async (status) => {
+    if (status === "rejected" && !doctorForm.doctorResponseNote.trim()) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Reason required",
+        text: "Please enter a rejection reason for the patient.",
+        confirmButtonColor: "#2563eb",
+      });
+      return;
+    }
+
+    if (status === "rescheduled" && !doctorForm.rescheduleReason.trim()) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Reason required",
+        text: "Please enter a reschedule reason for the patient.",
+        confirmButtonColor: "#2563eb",
+      });
+      return;
+    }
+
     try {
       setSubmitting(true);
       setError("");
@@ -709,25 +745,75 @@ const AppointmentDetailsPage = () => {
       };
       const response = await updateAppointmentStatus(id, payload);
       setAppointment(response?.appointment || null);
-      setActionMessage("Appointment updated successfully");
+
+      const successTextMap = {
+        accepted: "Appointment accepted and payment requested successfully.",
+        rescheduled: "Appointment rescheduled successfully.",
+        rejected: "Appointment rejected successfully.",
+      };
+
+      setActionMessage(successTextMap[status] || "Appointment updated successfully");
       await loadAppointment();
+
+      await Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: successTextMap[status] || "Appointment updated successfully.",
+        confirmButtonColor: "#2563eb",
+      });
     } catch (err) {
-      setError(err?.response?.data?.message || "Failed to update appointment");
+      const message = err?.response?.data?.message || "Failed to update appointment";
+      setError(message);
+
+      await Swal.fire({
+        icon: "error",
+        title: "Update Failed",
+        text: message,
+        confirmButtonColor: "#2563eb",
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDoctorCancel = async () => {
+    const confirmCancel = await Swal.fire({
+      icon: "warning",
+      title: "Cancel appointment?",
+      text: "This appointment will be cancelled.",
+      showCancelButton: true,
+      confirmButtonText: "Yes, cancel it",
+      cancelButtonText: "No",
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+    });
+
+    if (!confirmCancel.isConfirmed) return;
+
     try {
       setSubmitting(true);
       setError("");
       setActionMessage("");
+
       await cancelAppointment(id, { cancellationReason: "Cancelled by doctor" });
-      setActionMessage("Appointment cancelled successfully");
       await loadAppointment();
+
+      await Swal.fire({
+        icon: "success",
+        title: "Cancelled",
+        text: "Appointment cancelled successfully.",
+        confirmButtonColor: "#2563eb",
+      });
     } catch (err) {
-      setError(err?.response?.data?.message || "Failed to cancel appointment");
+      const message = err?.response?.data?.message || "Failed to cancel appointment";
+      setError(message);
+
+      await Swal.fire({
+        icon: "error",
+        title: "Cancel Failed",
+        text: message,
+        confirmButtonColor: "#2563eb",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -824,6 +910,42 @@ const AppointmentDetailsPage = () => {
                 value={appointment.doctorResponseNote || "No response yet"}
               />
             </div>
+
+
+            {(appointment.status === "rejected" || appointment.status === "rescheduled") && (
+              <div className="grid gap-4 md:grid-cols-2">
+                {appointment.status === "rejected" && (
+                  <div className="rounded-3xl border border-red-100 bg-red-50 p-5">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-red-500">
+                      Appointment Rejected
+                    </p>
+                    <p className="mt-2 text-sm text-red-700">
+                      {appointment.doctorResponseNote ||
+                        "The doctor rejected this appointment."}
+                    </p>
+                  </div>
+                )}
+
+                {appointment.status === "rescheduled" && (
+                  <div className="rounded-3xl border border-amber-100 bg-amber-50 p-5 md:col-span-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">
+                      Appointment Rescheduled
+                    </p>
+                    <p className="mt-2 text-sm text-amber-700">
+                      {appointment.rescheduleReason ||
+                        "The doctor rescheduled this appointment."}
+                    </p>
+
+                    {appointment.doctorResponseNote && (
+                      <p className="mt-2 text-sm text-amber-700">
+                        <span className="font-semibold">Doctor note:</span>{" "}
+                        {appointment.doctorResponseNote}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Notes */}
             <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
@@ -953,7 +1075,7 @@ const AppointmentDetailsPage = () => {
                           }))
                         }
                         className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
-                        placeholder="Optional note for patient"
+                        placeholder="Required when rejecting. Optional for accepted or rescheduled."
                       />
                     </div>
                     <div>
@@ -970,7 +1092,7 @@ const AppointmentDetailsPage = () => {
                           }))
                         }
                         className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
-                        placeholder="Use only when changing the requested time"
+                        placeholder="Required when rescheduling this appointment"
                       />
                     </div>
                   </div>
