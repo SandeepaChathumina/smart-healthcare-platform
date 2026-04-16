@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../../layouts/AuthLayout';
 import AuthCard from '../../components/auth/AuthCard';
 import TextInput from '../../components/ui/TextInput';
@@ -20,6 +21,7 @@ const ResetPasswordPage = () => {
 
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (location.state?.email) {
@@ -45,6 +47,19 @@ const ResetPasswordPage = () => {
     }));
   };
 
+  const validatePassword = (password) => {
+    const trimmed = password.trim();
+
+    if (!trimmed) return 'New password is required';
+    if (trimmed.length < 8) return 'Password must be at least 8 characters';
+    if (trimmed.length > 100) return 'Password must be less than 100 characters';
+    if (!/[A-Z]/.test(trimmed)) return 'Password must include at least one uppercase letter';
+    if (!/[a-z]/.test(trimmed)) return 'Password must include at least one lowercase letter';
+    if (!/\d/.test(trimmed)) return 'Password must include at least one number';
+
+    return '';
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -56,10 +71,9 @@ const ResetPasswordPage = () => {
       newErrors.otp = 'OTP is required';
     }
 
-    if (!formData.newPassword.trim()) {
-      newErrors.newPassword = 'New password is required';
-    } else if (formData.newPassword.trim().length < 6) {
-      newErrors.newPassword = 'Password must be at least 6 characters';
+    const passwordError = validatePassword(formData.newPassword);
+    if (passwordError) {
+      newErrors.newPassword = passwordError;
     }
 
     return newErrors;
@@ -79,9 +93,9 @@ const ResetPasswordPage = () => {
       setSubmitting(true);
 
       await resetPassword({
-        email: formData.email,
-        otp: formData.otp,
-        newPassword: formData.newPassword,
+        email: formData.email.trim(),
+        otp: formData.otp.trim(),
+        newPassword: formData.newPassword.trim(),
       });
 
       toast.success('Password reset successful. Please login.');
@@ -124,16 +138,44 @@ const ResetPasswordPage = () => {
             disabled={submitting}
           />
 
-          <TextInput
-            label="New password"
-            name="newPassword"
-            type="password"
-            value={formData.newPassword}
-            onChange={handleChange}
-            placeholder="Enter your new password"
-            error={errors.newPassword}
-            disabled={submitting}
-          />
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-slate-700">
+              New password
+            </label>
+
+            <div className="relative">
+              <input
+                name="newPassword"
+                type={showPassword ? 'text' : 'password'}
+                value={formData.newPassword}
+                onChange={handleChange}
+                placeholder="Enter your new password"
+                disabled={submitting}
+                className={`w-full rounded-xl border bg-white px-4 py-3 pr-12 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 ${
+                  errors.newPassword
+                    ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100'
+                    : 'border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
+                }`}
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                disabled={submitting}
+                className="absolute inset-y-0 right-3 flex items-center text-slate-500 transition hover:text-slate-700 disabled:cursor-not-allowed"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+            {errors.newPassword ? (
+              <p className="mt-2 text-sm text-red-600">{errors.newPassword}</p>
+            ) : (
+              <p className="mt-2 text-xs text-slate-500">
+                Use at least 8 characters with uppercase, lowercase, and a number.
+              </p>
+            )}
+          </div>
 
           {errors.form ? (
             <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

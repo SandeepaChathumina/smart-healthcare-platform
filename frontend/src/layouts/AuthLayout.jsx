@@ -6,7 +6,7 @@ const AuthLayout = ({ children, topLeftAction = null }) => {
       <div className="mx-auto max-w-7xl">
         {topLeftAction ? <div className="mb-6">{topLeftAction}</div> : null}
 
-        <div className="grid min-h-[calc(100vh-6rem)] items-stretch gap-8 lg:grid-cols-2">
+        <div className="grid min-h-[calc(100vh-6rem)] items-stretch gap-8 lg:grid-cols-2 ">
           <AuthSidePanel />
           <div className="flex items-center justify-center">{children}</div>
         </div>
