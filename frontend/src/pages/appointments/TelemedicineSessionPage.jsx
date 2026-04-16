@@ -1,31 +1,57 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import DashboardLayout from '../../layouts/DashboardLayout';
-import { getTelemedicineSessionById } from '../../services/appointmentService';
+import useAuth from '../../hooks/useAuth';
+import {
+  getTelemedicineSessionById,
+  updateTelemedicineSessionStatus,
+} from '../../services/appointmentService';
 
 const TelemedicineSessionPage = () => {
   const { sessionId } = useParams();
+  const { user } = useAuth();
 
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const loadSession = async () => {
-      try {
-        const data = await getTelemedicineSessionById(sessionId);
-        setSession(data?.session || null);
-      } catch (err) {
-        setError(err?.response?.data?.message || 'Failed to load telemedicine session');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const isDoctor = user?.role === 'Doctor';
+  const isPatient = user?.role === 'Patient';
 
+  const loadSession = async () => {
+    try {
+      const data = await getTelemedicineSessionById(sessionId);
+      setSession(data?.session || null);
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to load telemedicine session');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (sessionId) {
       loadSession();
     }
   }, [sessionId]);
+
+  const handleStartSession = async () => {
+    try {
+      setStarting(true);
+      setError('');
+
+      await updateTelemedicineSessionStatus(sessionId, {
+        status: 'active',
+      });
+
+      await loadSession();
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to start session');
+    } finally {
+      setStarting(false);
+    }
+  };
 
   return (
     <DashboardLayout title="Telemedicine Session">
@@ -45,28 +71,46 @@ const TelemedicineSessionPage = () => {
                 <p><strong>Scheduled Start:</strong> {session.scheduledStartTime}</p>
               </div>
 
-              <a
-                href={session.meetingLink}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-block rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white"
-              >
-                Join Session
-              </a>
+              {isDoctor && session.status !== 'active' && (
+                <button
+                  onClick={handleStartSession}
+                  disabled={starting}
+                  className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white"
+                >
+                  {starting ? 'Starting Session...' : 'Start Session'}
+                </button>
+              )}
+
+              {isDoctor && session.status === 'active' && (
+                <a
+                  href={session.meetingLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-block rounded-xl bg-green-600 px-5 py-3 font-semibold text-white"
+                >
+                  Join as Doctor
+                </a>
+              )}
+
+              {isPatient && session.status === 'active' && (
+                <a
+                  href={session.meetingLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-block rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white"
+                >
+                  Join Session
+                </a>
+              )}
+
+              {isPatient && session.status !== 'active' && (
+                <div className="rounded-xl bg-yellow-50 p-4 text-yellow-700">
+                  Waiting for doctor to start the session.
+                </div>
+              )}
             </div>
           )}
         </div>
-
-        {session?.meetingLink && (
-          <div className="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">
-            <iframe
-              src={session.meetingLink}
-              title="Telemedicine Session"
-              className="h-[700px] w-full border-0"
-              allow="camera; microphone; fullscreen; display-capture"
-            />
-          </div>
-        )}
       </div>
     </DashboardLayout>
   );
