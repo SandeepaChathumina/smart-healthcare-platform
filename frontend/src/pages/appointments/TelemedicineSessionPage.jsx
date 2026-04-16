@@ -17,12 +17,8 @@ const formatDateTime = (value) => {
 const getSessionBadge = (status) => {
   const value = String(status || "").toLowerCase();
 
-  if (value === "active") return "bg-green-100 text-green-700 ring-green-200";
-  if (value === "scheduled") return "bg-blue-100 text-blue-700 ring-blue-200";
-  if (value === "completed") return "bg-slate-100 text-slate-700 ring-slate-200";
-  if (value === "cancelled" || value === "expired") {
-    return "bg-red-100 text-red-700 ring-red-200";
-  }
+  if (value === "active") return "bg-blue-100 text-blue-700 ring-blue-200";
+  if (value === "scheduled") return "bg-sky-100 text-sky-700 ring-sky-200";
   return "bg-slate-100 text-slate-700 ring-slate-200";
 };
 
@@ -59,11 +55,7 @@ const TelemedicineSessionPage = () => {
     try {
       setStarting(true);
       setError("");
-
-      await updateTelemedicineSessionStatus(sessionId, {
-        status: "active",
-      });
-
+      await updateTelemedicineSessionStatus(sessionId, { status: "active" });
       await loadSession();
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to start session");
@@ -75,9 +67,9 @@ const TelemedicineSessionPage = () => {
   return (
     <DashboardLayout title="Telemedicine Session">
       <div className="space-y-6">
-        <div className="rounded-3xl bg-gradient-to-r from-emerald-600 to-teal-500 p-6 text-white shadow-lg">
-          <h1 className="text-2xl font-bold">Telemedicine Session</h1>
-          <p className="mt-2 text-sm text-emerald-50">
+        <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm">
+          <h1 className="text-2xl font-bold text-blue-700">Telemedicine Session</h1>
+          <p className="mt-2 text-sm text-slate-500">
             Start or join the online consultation through the secure meeting room.
           </p>
         </div>
@@ -87,14 +79,14 @@ const TelemedicineSessionPage = () => {
             {[1, 2, 3, 4].map((item) => (
               <div
                 key={item}
-                className="h-28 animate-pulse rounded-3xl bg-white shadow-sm ring-1 ring-slate-200"
+                className="h-28 animate-pulse rounded-3xl bg-white shadow-sm ring-1 ring-blue-100"
               />
             ))}
           </div>
         )}
 
         {error && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-blue-700">
             {error}
           </div>
         )}
@@ -102,8 +94,8 @@ const TelemedicineSessionPage = () => {
         {session && !loading && (
           <>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200 transition duration-200 hover:shadow-md">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-blue-100 transition duration-200 hover:shadow-md">
+                <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                   Platform
                 </p>
                 <p className="mt-2 text-lg font-bold text-slate-900">
@@ -111,8 +103,8 @@ const TelemedicineSessionPage = () => {
                 </p>
               </div>
 
-              <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200 transition duration-200 hover:shadow-md">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-blue-100 transition duration-200 hover:shadow-md">
+                <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                   Status
                 </p>
                 <div className="mt-2">
@@ -126,8 +118,8 @@ const TelemedicineSessionPage = () => {
                 </div>
               </div>
 
-              <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200 transition duration-200 hover:shadow-md">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-blue-100 transition duration-200 hover:shadow-md">
+                <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                   Scheduled Start
                 </p>
                 <p className="mt-2 text-lg font-bold text-slate-900">
@@ -135,8 +127,8 @@ const TelemedicineSessionPage = () => {
                 </p>
               </div>
 
-              <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200 transition duration-200 hover:shadow-md">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              <div className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-blue-100 transition duration-200 hover:shadow-md">
+                <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                   Access
                 </p>
                 <p className="mt-2 text-lg font-bold text-slate-900">
@@ -145,8 +137,8 @@ const TelemedicineSessionPage = () => {
               </div>
             </div>
 
-            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-              <h2 className="text-lg font-bold text-slate-900">Session Actions</h2>
+            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
+              <h2 className="text-lg font-bold text-blue-700">Session Actions</h2>
               <p className="mt-2 text-sm text-slate-500">
                 The doctor should start the session first. Patients can join once the
                 session becomes active.
@@ -168,7 +160,7 @@ const TelemedicineSessionPage = () => {
                     href={session.meetingLink}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition duration-200 hover:scale-[1.02] hover:bg-emerald-700"
+                    className="rounded-xl border border-blue-200 bg-white px-5 py-3 font-semibold text-blue-700 transition duration-200 hover:scale-[1.02] hover:bg-blue-50"
                   >
                     Join as Doctor
                   </a>
@@ -179,7 +171,7 @@ const TelemedicineSessionPage = () => {
                     href={session.meetingLink}
                     target="_blank"
                     rel="noreferrer"
-                    className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition duration-200 hover:scale-[1.02] hover:bg-emerald-700"
+                    className="rounded-xl border border-blue-200 bg-white px-5 py-3 font-semibold text-blue-700 transition duration-200 hover:scale-[1.02] hover:bg-blue-50"
                   >
                     Join Session
                   </a>
@@ -187,28 +179,28 @@ const TelemedicineSessionPage = () => {
               </div>
 
               {isPatient && session.status !== "active" && (
-                <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm text-amber-700">
+                <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm text-blue-700">
                   Waiting for doctor to start the session.
                 </div>
               )}
             </div>
 
             {session.status === "active" && (
-              <div className="rounded-3xl bg-white p-3 shadow-sm ring-1 ring-slate-200">
-                <div className="mb-3 rounded-2xl bg-slate-50 p-4">
+              <div className="rounded-3xl bg-white p-3 shadow-sm ring-1 ring-blue-100">
+                <div className="mb-3 rounded-2xl bg-blue-50 p-4">
                   <p className="text-sm text-slate-600">
                     When you click the join button above, the secure Jitsi room will open in a
                     new tab.
                   </p>
                 </div>
 
-                <div className="overflow-hidden rounded-3xl bg-slate-100">
+                <div className="overflow-hidden rounded-3xl bg-blue-50/40">
                   <div className="flex h-[500px] items-center justify-center text-center text-slate-500">
                     <div>
                       <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-sm">
                         🎥
                       </div>
-                      <p className="font-semibold">Meeting room is ready</p>
+                      <p className="font-semibold text-blue-700">Meeting room is ready</p>
                       <p className="mt-1 text-sm">
                         Use the join button above to open the live video session.
                       </p>

@@ -7,11 +7,11 @@ import { getAppointmentsByDoctor } from "../../services/appointmentService";
 const getStatusBadge = (status) => {
   const value = String(status || "").toLowerCase();
 
-  if (value === "confirmed") return "bg-green-100 text-green-700 ring-green-200";
-  if (value === "awaiting_payment") return "bg-amber-100 text-amber-700 ring-amber-200";
-  if (value === "pending") return "bg-blue-100 text-blue-700 ring-blue-200";
+  if (value === "confirmed") return "bg-blue-100 text-blue-700 ring-blue-200";
+  if (value === "awaiting_payment") return "bg-sky-100 text-sky-700 ring-sky-200";
+  if (value === "pending") return "bg-indigo-100 text-indigo-700 ring-indigo-200";
   if (value === "cancelled" || value === "rejected") {
-    return "bg-red-100 text-red-700 ring-red-200";
+    return "bg-slate-100 text-slate-700 ring-slate-200";
   }
   return "bg-slate-100 text-slate-700 ring-slate-200";
 };
@@ -58,9 +58,9 @@ const DoctorAppointmentsPage = () => {
   return (
     <DashboardLayout title="Doctor Appointments">
       <div className="space-y-6">
-        <div className="rounded-3xl bg-gradient-to-r from-violet-600 to-indigo-600 p-6 text-white shadow-lg">
-          <h1 className="text-2xl font-bold">Appointments</h1>
-          <p className="mt-2 text-sm text-indigo-100">
+        <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm">
+          <h1 className="text-2xl font-bold text-blue-700">Appointments</h1>
+          <p className="mt-2 text-sm text-slate-500">
             Review booking requests, approve visits, and manage telemedicine sessions.
           </p>
         </div>
@@ -78,8 +78,8 @@ const DoctorAppointmentsPage = () => {
               onClick={() => setFilter(key)}
               className={`rounded-full px-4 py-2 text-sm font-medium transition duration-200 ${
                 filter === key
-                  ? "bg-violet-600 text-white shadow-md"
-                  : "bg-white text-slate-700 ring-1 ring-slate-200 hover:-translate-y-0.5 hover:shadow-sm"
+                  ? "bg-blue-600 text-white shadow-md"
+                  : "bg-white text-blue-700 ring-1 ring-blue-100 hover:-translate-y-0.5 hover:shadow-sm"
               }`}
             >
               {label}
@@ -92,24 +92,24 @@ const DoctorAppointmentsPage = () => {
             {[1, 2, 3].map((item) => (
               <div
                 key={item}
-                className="h-36 animate-pulse rounded-3xl bg-white shadow-sm ring-1 ring-slate-200"
+                className="h-36 animate-pulse rounded-3xl bg-white shadow-sm ring-1 ring-blue-100"
               />
             ))}
           </div>
         )}
 
         {error && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-blue-700">
             {error}
           </div>
         )}
 
         {!loading && !error && filteredAppointments.length === 0 && (
-          <div className="rounded-3xl bg-white p-10 text-center shadow-sm ring-1 ring-slate-200">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-2xl">
+          <div className="rounded-3xl bg-white p-10 text-center shadow-sm ring-1 ring-blue-100">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-50 text-2xl">
               🩺
             </div>
-            <h2 className="text-xl font-semibold text-slate-900">No appointments yet</h2>
+            <h2 className="text-xl font-semibold text-blue-700">No appointments yet</h2>
             <p className="mt-2 text-sm text-slate-500">
               New appointment requests will appear here.
             </p>
@@ -120,12 +120,12 @@ const DoctorAppointmentsPage = () => {
           {filteredAppointments.map((appointment) => (
             <div
               key={appointment._id}
-              className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition duration-300 hover:-translate-y-1 hover:shadow-lg"
+              className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100 transition duration-300 hover:-translate-y-1 hover:shadow-lg"
             >
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700">
+                    <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
                       {formatType(appointment.appointmentType)}
                     </span>
                     <span
@@ -147,8 +147,8 @@ const DoctorAppointmentsPage = () => {
                   </div>
 
                   <div className="grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
-                    <div className="rounded-2xl bg-slate-50 p-3">
-                      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    <div className="rounded-2xl bg-blue-50/50 p-3">
+                      <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                         Preferred Time
                       </p>
                       <p className="mt-1 font-medium text-slate-700">
@@ -156,8 +156,8 @@ const DoctorAppointmentsPage = () => {
                       </p>
                     </div>
 
-                    <div className="rounded-2xl bg-slate-50 p-3">
-                      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    <div className="rounded-2xl bg-blue-50/50 p-3">
+                      <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                         Scheduled Time
                       </p>
                       <p className="mt-1 font-medium text-slate-700">
@@ -165,8 +165,8 @@ const DoctorAppointmentsPage = () => {
                       </p>
                     </div>
 
-                    <div className="rounded-2xl bg-slate-50 p-3">
-                      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    <div className="rounded-2xl bg-blue-50/50 p-3">
+                      <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                         Fee
                       </p>
                       <p className="mt-1 font-medium text-slate-700">
@@ -174,8 +174,8 @@ const DoctorAppointmentsPage = () => {
                       </p>
                     </div>
 
-                    <div className="rounded-2xl bg-slate-50 p-3">
-                      <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                    <div className="rounded-2xl bg-blue-50/50 p-3">
+                      <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                         Patient Notes
                       </p>
                       <p className="mt-1 font-medium text-slate-700">
@@ -188,7 +188,7 @@ const DoctorAppointmentsPage = () => {
                 <div className="flex shrink-0 flex-wrap gap-3">
                   <Link
                     to={`/doctor/appointments/${appointment._id}`}
-                    className="rounded-xl bg-slate-900 px-5 py-3 text-center font-semibold text-white transition duration-200 hover:scale-[1.02] hover:bg-slate-800"
+                    className="rounded-xl bg-blue-600 px-5 py-3 text-center font-semibold text-white transition duration-200 hover:scale-[1.02] hover:bg-blue-700"
                   >
                     Manage Appointment
                   </Link>
@@ -198,7 +198,7 @@ const DoctorAppointmentsPage = () => {
                     appointment.telemedicineSessionId && (
                       <Link
                         to={`/doctor/telemedicine/${appointment.telemedicineSessionId}`}
-                        className="rounded-xl bg-emerald-600 px-5 py-3 text-center font-semibold text-white transition duration-200 hover:scale-[1.02] hover:bg-emerald-700"
+                        className="rounded-xl border border-blue-200 bg-white px-5 py-3 text-center font-semibold text-blue-700 transition duration-200 hover:scale-[1.02] hover:bg-blue-50"
                       >
                         Open Session
                       </Link>

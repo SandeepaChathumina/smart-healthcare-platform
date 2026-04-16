@@ -53,9 +53,9 @@ const PaymentSuccessPage = () => {
     <DashboardLayout title="Payment Success">
       <div className="space-y-6">
         {loading && (
-          <div className="rounded-3xl bg-white p-10 text-center shadow-sm ring-1 ring-slate-200">
+          <div className="rounded-3xl bg-white p-10 text-center shadow-sm ring-1 ring-blue-100">
             <div className="mx-auto h-14 w-14 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
-            <h2 className="mt-5 text-xl font-bold text-slate-900">
+            <h2 className="mt-5 text-xl font-bold text-blue-700">
               Confirming your payment...
             </h2>
             <p className="mt-2 text-sm text-slate-500">
@@ -65,8 +65,8 @@ const PaymentSuccessPage = () => {
         )}
 
         {!loading && error && (
-          <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-            <div className="rounded-2xl bg-red-50 p-5 text-red-700">
+          <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-blue-100">
+            <div className="rounded-2xl bg-blue-50 p-5 text-blue-700">
               <h2 className="text-2xl font-bold">Payment Verification Failed</h2>
               <p className="mt-2">{error}</p>
             </div>
@@ -82,19 +82,19 @@ const PaymentSuccessPage = () => {
 
         {!loading && !error && (
           <>
-            <div className="rounded-3xl bg-gradient-to-r from-emerald-600 to-green-500 p-8 text-white shadow-lg">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/15 text-2xl">
+            <div className="rounded-3xl border border-blue-100 bg-white p-8 shadow-sm">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-2xl text-blue-700">
                 ✓
               </div>
-              <h1 className="mt-4 text-3xl font-bold">Payment Successful</h1>
-              <p className="mt-2 text-sm text-green-50">
+              <h1 className="mt-4 text-3xl font-bold text-blue-700">Payment Successful</h1>
+              <p className="mt-2 text-sm text-slate-500">
                 Your appointment has been confirmed successfully.
               </p>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-3">
-              <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
+                <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                   Amount Paid
                 </p>
                 <h3 className="mt-2 text-2xl font-bold text-slate-900">
@@ -105,8 +105,8 @@ const PaymentSuccessPage = () => {
                 </p>
               </div>
 
-              <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
+                <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                   Appointment Status
                 </p>
                 <h3 className="mt-2 text-2xl font-bold capitalize text-slate-900">
@@ -117,8 +117,8 @@ const PaymentSuccessPage = () => {
                 </p>
               </div>
 
-              <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
+                <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                   Session Type
                 </p>
                 <h3 className="mt-2 text-2xl font-bold text-slate-900">
@@ -132,8 +132,8 @@ const PaymentSuccessPage = () => {
               </div>
             </div>
 
-            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-              <h2 className="text-lg font-bold text-slate-900">Next Step</h2>
+            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
+              <h2 className="text-lg font-bold text-blue-700">Next Step</h2>
               <p className="mt-2 text-sm text-slate-500">
                 You can now review your confirmed appointment details. For telemedicine
                 appointments, open the session page to wait for the doctor to start.
@@ -150,7 +150,7 @@ const PaymentSuccessPage = () => {
                 {session?._id && (
                   <Link
                     to={`/patient/telemedicine/${session._id}`}
-                    className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition duration-200 hover:scale-[1.02] hover:bg-emerald-700"
+                    className="rounded-xl border border-blue-200 bg-white px-5 py-3 font-semibold text-blue-700 transition duration-200 hover:scale-[1.02] hover:bg-blue-50"
                   >
                     Open Session
                   </Link>

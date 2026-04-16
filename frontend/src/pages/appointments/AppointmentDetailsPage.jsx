@@ -10,13 +10,10 @@ import {
 const badgeClass = (value) => {
   const status = String(value || "").toLowerCase();
 
-  if (status === "confirmed") return "bg-green-100 text-green-700 ring-green-200";
-  if (status === "awaiting_payment") return "bg-amber-100 text-amber-700 ring-amber-200";
-  if (status === "pending") return "bg-blue-100 text-blue-700 ring-blue-200";
-  if (status === "paid") return "bg-green-100 text-green-700 ring-green-200";
-  if (status === "cancelled" || status === "rejected" || status === "refunded") {
-    return "bg-red-100 text-red-700 ring-red-200";
-  }
+  if (status === "confirmed") return "bg-blue-100 text-blue-700 ring-blue-200";
+  if (status === "awaiting_payment") return "bg-sky-100 text-sky-700 ring-sky-200";
+  if (status === "pending") return "bg-indigo-100 text-indigo-700 ring-indigo-200";
+  if (status === "paid") return "bg-blue-100 text-blue-700 ring-blue-200";
   return "bg-slate-100 text-slate-700 ring-slate-200";
 };
 
@@ -33,8 +30,8 @@ const formatType = (type) => {
 };
 
 const InfoCard = ({ label, value }) => (
-  <div className="rounded-2xl bg-slate-50 p-4 transition duration-200 hover:shadow-sm">
-    <p className="text-xs font-medium uppercase tracking-wide text-slate-400">{label}</p>
+  <div className="rounded-2xl bg-blue-50/50 p-4 transition duration-200 hover:shadow-sm">
+    <p className="text-xs font-medium uppercase tracking-wide text-blue-400">{label}</p>
     <p className="mt-2 text-sm font-medium text-slate-700">{value || "N/A"}</p>
   </div>
 );
@@ -86,9 +83,9 @@ const AppointmentDetailsPage = () => {
   return (
     <DashboardLayout title="Appointment Details">
       <div className="space-y-6">
-        <div className="rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 p-6 text-white shadow-lg">
+        <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm">
           <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/90">
+            <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
               {formatType(appointment?.appointmentType)}
             </span>
 
@@ -113,10 +110,10 @@ const AppointmentDetailsPage = () => {
             )}
           </div>
 
-          <h1 className="mt-4 text-2xl font-bold">
+          <h1 className="mt-4 text-2xl font-bold text-blue-700">
             {appointment?.reason || "Doctor Consultation"}
           </h1>
-          <p className="mt-2 text-sm text-slate-200">
+          <p className="mt-2 text-sm text-slate-500">
             Review appointment information, payment progress, and session availability.
           </p>
         </div>
@@ -126,14 +123,14 @@ const AppointmentDetailsPage = () => {
             {[1, 2, 3, 4].map((item) => (
               <div
                 key={item}
-                className="h-28 animate-pulse rounded-3xl bg-white shadow-sm ring-1 ring-slate-200"
+                className="h-28 animate-pulse rounded-3xl bg-white shadow-sm ring-1 ring-blue-100"
               />
             ))}
           </div>
         )}
 
         {error && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-blue-700">
             {error}
           </div>
         )}
@@ -141,10 +138,7 @@ const AppointmentDetailsPage = () => {
         {appointment && !loading && !error && (
           <>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <InfoCard
-                label="Appointment Type"
-                value={formatType(appointment.appointmentType)}
-              />
+              <InfoCard label="Appointment Type" value={formatType(appointment.appointmentType)} />
               <InfoCard
                 label="Preferred Date & Time"
                 value={formatDateTime(appointment.preferredDateTime)}
@@ -153,10 +147,7 @@ const AppointmentDetailsPage = () => {
                 label="Scheduled Date & Time"
                 value={formatDateTime(appointment.scheduledDateTime)}
               />
-              <InfoCard
-                label="Consultation Fee"
-                value={`LKR ${appointment.consultationFee || 0}`}
-              />
+              <InfoCard label="Consultation Fee" value={`LKR ${appointment.consultationFee || 0}`} />
               <InfoCard
                 label="Symptoms Summary"
                 value={appointment.symptomsSummary || "No summary provided"}
@@ -167,11 +158,11 @@ const AppointmentDetailsPage = () => {
               />
             </div>
 
-            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-              <h2 className="text-lg font-bold text-slate-900">Notes</h2>
+            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
+              <h2 className="text-lg font-bold text-blue-700">Notes</h2>
               <div className="mt-4 grid gap-4 md:grid-cols-2">
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                <div className="rounded-2xl bg-blue-50/50 p-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                     Patient Notes
                   </p>
                   <p className="mt-2 text-sm text-slate-700">
@@ -179,16 +170,16 @@ const AppointmentDetailsPage = () => {
                   </p>
                 </div>
 
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                <div className="rounded-2xl bg-blue-50/50 p-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                     Status Summary
                   </p>
                   <p className="mt-2 text-sm text-slate-700">
                     This appointment is currently{" "}
                     <span className="font-semibold capitalize">
                       {appointment.status?.replace("_", " ")}
-                    </span>
-                    {" "}with payment marked as{" "}
+                    </span>{" "}
+                    with payment marked as{" "}
                     <span className="font-semibold capitalize">
                       {appointment.paymentStatus || "pending"}
                     </span>.
@@ -214,7 +205,7 @@ const AppointmentDetailsPage = () => {
                   isPatient && (
                     <Link
                       to={`/patient/telemedicine/${session._id}`}
-                      className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition duration-200 hover:scale-[1.02] hover:bg-emerald-700"
+                      className="rounded-xl border border-blue-200 bg-white px-5 py-3 font-semibold text-blue-700 transition duration-200 hover:scale-[1.02] hover:bg-blue-50"
                     >
                       Open Session
                     </Link>
@@ -226,7 +217,7 @@ const AppointmentDetailsPage = () => {
                   isDoctor && (
                     <Link
                       to={`/doctor/telemedicine/${session._id}`}
-                      className="rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition duration-200 hover:scale-[1.02] hover:bg-emerald-700"
+                      className="rounded-xl border border-blue-200 bg-white px-5 py-3 font-semibold text-blue-700 transition duration-200 hover:scale-[1.02] hover:bg-blue-50"
                     >
                       Open Session
                     </Link>
@@ -235,11 +226,11 @@ const AppointmentDetailsPage = () => {
             </div>
 
             {appointment.appointmentType === "telemedicine" && (
-              <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-                <h2 className="text-lg font-bold text-slate-900">Telemedicine Session</h2>
+              <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
+                <h2 className="text-lg font-bold text-blue-700">Telemedicine Session</h2>
 
                 {sessionLoading && (
-                  <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+                  <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm text-blue-700">
                     Loading session details...
                   </div>
                 )}
@@ -256,7 +247,7 @@ const AppointmentDetailsPage = () => {
                 )}
 
                 {!sessionLoading && !session && (
-                  <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm text-amber-700">
+                  <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm text-blue-700">
                     Session details will appear here after payment confirmation and session setup.
                   </div>
                 )}

@@ -60,9 +60,9 @@ const PaymentPage = () => {
   return (
     <DashboardLayout title="Appointment Payment">
       <div className="space-y-6">
-        <div className="rounded-3xl bg-gradient-to-r from-blue-700 to-indigo-600 p-6 text-white shadow-lg">
-          <h1 className="text-2xl font-bold">Secure Payment</h1>
-          <p className="mt-2 text-sm text-blue-100">
+        <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm">
+          <h1 className="text-2xl font-bold text-blue-700">Secure Payment</h1>
+          <p className="mt-2 text-sm text-slate-500">
             Complete your consultation payment to confirm this appointment.
           </p>
         </div>
@@ -72,28 +72,28 @@ const PaymentPage = () => {
             {[1, 2, 3, 4].map((item) => (
               <div
                 key={item}
-                className="h-28 animate-pulse rounded-3xl bg-white shadow-sm ring-1 ring-slate-200"
+                className="h-28 animate-pulse rounded-3xl bg-white shadow-sm ring-1 ring-blue-100"
               />
             ))}
           </div>
         )}
 
         {error && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-blue-700">
             {error}
           </div>
         )}
 
         {appointment && !loading && (
           <div className="grid gap-6 lg:grid-cols-[1.3fr_0.9fr]">
-            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-700">
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
                   {appointment.appointmentType === "telemedicine"
                     ? "Telemedicine"
                     : "In Person"}
                 </span>
-                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+                <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700 ring-1 ring-sky-200">
                   {appointment.status?.replace("_", " ")}
                 </span>
               </div>
@@ -106,8 +106,8 @@ const PaymentPage = () => {
               </p>
 
               <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                <div className="rounded-2xl bg-blue-50/50 p-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                     Scheduled Time
                   </p>
                   <p className="mt-2 text-sm font-medium text-slate-700">
@@ -117,8 +117,8 @@ const PaymentPage = () => {
                   </p>
                 </div>
 
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                <div className="rounded-2xl bg-blue-50/50 p-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                     Payment Status
                   </p>
                   <p className="mt-2 text-sm font-medium text-slate-700 capitalize">
@@ -126,8 +126,8 @@ const PaymentPage = () => {
                   </p>
                 </div>
 
-                <div className="rounded-2xl bg-slate-50 p-4 sm:col-span-2">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+                <div className="rounded-2xl bg-blue-50/50 p-4 sm:col-span-2">
+                  <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                     Symptoms / Notes
                   </p>
                   <p className="mt-2 text-sm font-medium text-slate-700">
@@ -137,13 +137,13 @@ const PaymentPage = () => {
               </div>
             </div>
 
-            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-              <div className="rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 p-5 text-white">
-                <p className="text-sm text-slate-300">Total to Pay</p>
-                <h3 className="mt-2 text-3xl font-bold">
+            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
+              <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5">
+                <p className="text-sm text-blue-500">Total to Pay</p>
+                <h3 className="mt-2 text-3xl font-bold text-blue-700">
                   LKR {appointment.consultationFee || 0}
                 </h3>
-                <p className="mt-2 text-xs text-slate-300">
+                <p className="mt-2 text-xs text-slate-500">
                   Payment is securely processed through Stripe sandbox.
                 </p>
               </div>
@@ -158,14 +158,14 @@ const PaymentPage = () => {
                   {paying ? "Redirecting to Stripe..." : "Pay with Stripe"}
                 </button>
               ) : (
-                <div className="mt-5 rounded-2xl bg-green-50 p-4 text-sm text-green-700">
+                <div className="mt-5 rounded-2xl bg-blue-50 p-4 text-sm text-blue-700">
                   This appointment is not currently waiting for payment.
                 </div>
               )}
 
               <button
                 onClick={() => navigate(`/patient/appointments/${id}`)}
-                className="mt-3 w-full rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-700 transition duration-200 hover:bg-slate-50"
+                className="mt-3 w-full rounded-2xl border border-blue-200 bg-white px-5 py-4 font-semibold text-blue-700 transition duration-200 hover:bg-blue-50"
               >
                 Back to Appointment
               </button>
