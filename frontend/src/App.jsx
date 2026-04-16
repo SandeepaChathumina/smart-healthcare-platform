@@ -34,6 +34,7 @@ import UploadReportPage from "./pages/patient/UploadReportPage";
 import ViewReportsPage from "./pages/patient/ViewReportsPage";
 import MedicalHistoryPage from "./pages/patient/MedicalHistoryPage";
 import PrescriptionsPage from "./pages/patient/PrescriptionsPage";
+import PatientPrescriptionDetailsPage from "./pages/patient/PatientPrescriptionDetailsPage";
 
 // Doctor Availability Pages
 import AvailabilityPage from "./pages/doctor/availability/AvailabilityPage";
@@ -257,6 +258,13 @@ function App() {
               element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
             >
               <Route index element={<PrescriptionsPage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.PATIENT_PRESCRIPTION_DETAILS}
+              element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
+            >
+              <Route index element={<PatientPrescriptionDetailsPage />} />
             </Route>
 
             {/* Telemedicine Route */}

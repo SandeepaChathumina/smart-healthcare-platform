@@ -111,6 +111,7 @@ export const getPrescriptionByAppointment = async (appointmentId) => {
   return response.data;
 };
 
+
 export const updatePrescription = async (id, payload) => {
   const response = await axios.put(`${DOCTOR_BASE_URL}/api/doctor/prescriptions/${id}`, payload);
   return response.data;
