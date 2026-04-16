@@ -1,6 +1,6 @@
 import axios from '../lib/axios';
 
-const PATIENT_BASE_URL = import.meta.env.VITE_PATIENT_BASE_URL || 'http://localhost:5002';
+const PATIENT_BASE_URL = import.meta.env.VITE_PATIENT_BASE_URL;
 
 // Report endpoints
 export const uploadReport = async (formData) => {

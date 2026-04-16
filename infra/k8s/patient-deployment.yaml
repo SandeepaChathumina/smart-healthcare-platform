@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: patient-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: patient-service
+  template:
+    metadata:
+      labels:
+        app: patient-service
+    spec:
+      containers:
+        - name: patient-service
+          image: docker-patient-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5002
+          envFrom:
+            - secretRef:
+                name: patient-service-secret

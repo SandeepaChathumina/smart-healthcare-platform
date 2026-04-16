@@ -80,6 +80,12 @@ services:
     build: ../../frontend
     ports:
       - "3000:5173"
+    environment:
+      - VITE_AUTH_BASE_URL=${VITE_AUTH_BASE_URL}
+      - VITE_PATIENT_BASE_URL=${VITE_PATIENT_BASE_URL}
+      - VITE_DOCTOR_BASE_URL=${VITE_DOCTOR_BASE_URL}
+      - VITE_APPOINTMENT_BASE_URL=${VITE_APPOINTMENT_BASE_URL}
+
 
 volumes:
   patient_uploads:
