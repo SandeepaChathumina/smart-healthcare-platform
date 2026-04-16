@@ -21,9 +21,37 @@ exports.uploadReport = async (req, res) => {
       return res.status(400).json({ message: 'reportTitle and reportType are required' });
     }
 
+    let linkedAppointment = null;
+    if (appointmentId) {
+      if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
+        return res.status(400).json({ message: 'Invalid appointment ID format' });
+      }
+
+      linkedAppointment = await Appointment.findOne({
+        _id: appointmentId,
+        patientId: req.user.id
+      });
+
+      if (!linkedAppointment) {
+        return res.status(404).json({
+          message: 'Appointment not found for this patient'
+        });
+      }
+    }
+
     const report = await PatientReport.create({
       patientId: req.user.id,
       appointmentId: appointmentId || null,
+      doctorId: linkedAppointment?.doctorId || null,
+      appointmentDetails: linkedAppointment
+        ? {
+            reason: linkedAppointment.reason || '',
+            appointmentType: linkedAppointment.appointmentType || '',
+            preferredDateTime: linkedAppointment.preferredDateTime || null,
+            scheduledDateTime: linkedAppointment.scheduledDateTime || null,
+            status: linkedAppointment.status || ''
+          }
+        : undefined,
       reportTitle,
       reportType,
       fileName: req.file.originalname,
@@ -34,6 +62,12 @@ exports.uploadReport = async (req, res) => {
       description: description || '',
       uploadedAt: new Date()
     });
+
+    if (linkedAppointment) {
+      linkedAppointment.uploadedReportIds = linkedAppointment.uploadedReportIds || [];
+      linkedAppointment.uploadedReportIds.push(report._id);
+      await linkedAppointment.save();
+    }
 
     return res.status(201).json({
       success: true,

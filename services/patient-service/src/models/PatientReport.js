@@ -12,6 +12,19 @@ const patientReportSchema = new mongoose.Schema({
     ref: 'Appointment',
     required: false
   },
+  doctorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: false,
+    index: true
+  },
+  appointmentDetails: {
+    reason: { type: String, default: '' },
+    appointmentType: { type: String, default: '' },
+    preferredDateTime: { type: Date, default: null },
+    scheduledDateTime: { type: Date, default: null },
+    status: { type: String, default: '' }
+  },
   reportTitle: {
     type: String,
     required: true,
@@ -61,5 +74,7 @@ const patientReportSchema = new mongoose.Schema({
 
 patientReportSchema.index({ patientId: 1, uploadedAt: -1 });
 patientReportSchema.index({ patientId: 1, reportType: 1 });
+patientReportSchema.index({ patientId: 1, appointmentId: 1 });
+patientReportSchema.index({ doctorId: 1, uploadedAt: -1 });
 
 module.exports = mongoose.model('PatientReport', patientReportSchema);

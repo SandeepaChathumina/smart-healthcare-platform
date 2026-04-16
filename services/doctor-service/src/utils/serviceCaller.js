@@ -18,7 +18,7 @@ const validateAppointment = async (appointmentId, doctorId, token) => {
       throw new Error("This appointment does not belong to you");
     }
 
-    const validStatuses = ["confirmed", "completed"];
+    const validStatuses = ["accepted", "awaiting_payment", "confirmed", "completed", "rescheduled"];
     if (!validStatuses.includes(appointment.status)) {
       throw new Error(
         `Cannot add consultation note. Appointment status is ${appointment.status}`

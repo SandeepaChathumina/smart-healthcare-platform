@@ -141,6 +141,12 @@ const AppointmentCard = ({ appointment, onAccept, onReject }) => {
           >
             View Details
           </Link>
+          <Link
+            to={`/doctor/appointments/${appointment._id}`}
+            className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-blue-700"
+          >
+            Consultant Notes
+          </Link>
         </div>
       </div>
     </div>
@@ -185,6 +191,12 @@ const UpcomingAppointmentsWidget = ({ appointments, onAccept, onReject }) => {
               className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
             >
               View
+            </Link>
+            <Link
+              to={`/doctor/appointments/${appointment._id}`}
+              className="rounded-lg bg-blue-600 px-2 py-1 text-xs text-white"
+            >
+              Notes
             </Link>
           </div>
         </div>
@@ -266,7 +278,7 @@ const DoctorDashboardPage = () => {
       title: 'Consultation Notes',
       description: 'Create and manage patient consultation records',
       icon: FileText,
-      link: '/doctor/consultations',
+      link: APP_ROUTES.DOCTOR_APPOINTMENTS,
       color: 'bg-green-100 text-green-600',
     },
     {

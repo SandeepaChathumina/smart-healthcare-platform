@@ -2,7 +2,8 @@
 
 import axios from '../lib/axios';
 
-const DOCTOR_BASE_URL = import.meta.env.VITE_DOCTOR_BASE_URL;
+const DOCTOR_BASE_URL =
+  import.meta.env.VITE_DOCTOR_BASE_URL || "http://localhost:5003";
 
 // Availability endpoints
 export const getMyAvailability = async () => {
