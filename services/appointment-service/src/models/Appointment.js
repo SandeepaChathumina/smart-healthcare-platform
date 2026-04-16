@@ -53,6 +53,13 @@ const appointmentSchema = new mongoose.Schema(
       default: null,
     },
 
+    durationMinutes: {
+      type: Number,
+      default: 30,
+      min: [15, "Minimum duration is 15 minutes"],
+      max: [240, "Maximum duration is 240 minutes"],
+    },
+
     status: {
       type: String,
       enum: [
@@ -78,7 +85,6 @@ const appointmentSchema = new mongoose.Schema(
 
     consultationFee: {
       type: Number,
-      required: [true, "Consultation fee is required"],
       min: [0, "Consultation fee cannot be negative"],
       default: 0,
     },
@@ -147,13 +153,17 @@ appointmentSchema.index({ patientId: 1, createdAt: -1 });
 appointmentSchema.index({ doctorId: 1, createdAt: -1 });
 appointmentSchema.index({ doctorId: 1, status: 1 });
 appointmentSchema.index({ patientId: 1, status: 1 });
+appointmentSchema.index({ doctorId: 1, preferredDateTime: 1 });
+appointmentSchema.index({ doctorId: 1, scheduledDateTime: 1 });
 
 appointmentSchema.pre("save", function () {
-  if (this.scheduledDateTime && this.scheduledDateTime < new Date()) {
+  const now = new Date();
+
+  if (this.scheduledDateTime && this.scheduledDateTime < now && this.status !== "completed") {
     throw new Error("Scheduled date/time cannot be in the past");
   }
 
-  if (this.preferredDateTime && this.preferredDateTime < new Date()) {
+  if (this.preferredDateTime && this.preferredDateTime < now && this.isNew) {
     throw new Error("Preferred date/time cannot be in the past");
   }
 });
