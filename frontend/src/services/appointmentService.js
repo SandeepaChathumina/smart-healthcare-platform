@@ -1,6 +1,7 @@
 import axios from '../lib/axios';
 
-const APPOINTMENT_BASE_URL = import.meta.env.VITE_APPOINTMENT_BASE_URL;
+const APPOINTMENT_BASE_URL =
+  import.meta.env.VITE_APPOINTMENT_BASE_URL || 'http://localhost:5004';
 
 export const createAppointment = async (payload) => {
   const response = await axios.post(`${APPOINTMENT_BASE_URL}/api/appointments`, payload);
@@ -38,7 +39,21 @@ export const cancelAppointment = async (appointmentId, payload) => {
   return response.data;
 };
 
-// Payment endpoints
+export const createStripeCheckoutSession = async (appointmentId) => {
+  const response = await axios.post(
+    `${APPOINTMENT_BASE_URL}/api/payments/${appointmentId}/checkout-session`
+  );
+  return response.data;
+};
+
+export const confirmStripePayment = async (payload) => {
+  const response = await axios.post(
+    `${APPOINTMENT_BASE_URL}/api/payments/confirm-stripe-payment`,
+    payload
+  );
+  return response.data;
+};
+
 export const createPayment = async (appointmentId, payload) => {
   const response = await axios.post(
     `${APPOINTMENT_BASE_URL}/api/payments/${appointmentId}/pay`,
@@ -52,7 +67,6 @@ export const getPaymentById = async (paymentId) => {
   return response.data;
 };
 
-// Telemedicine endpoints
 export const createTelemedicineSession = async (appointmentId, payload = {}) => {
   const response = await axios.post(
     `${APPOINTMENT_BASE_URL}/api/telemedicine-sessions/${appointmentId}`,
@@ -62,7 +76,16 @@ export const createTelemedicineSession = async (appointmentId, payload = {}) => 
 };
 
 export const getTelemedicineSessionByAppointment = async (appointmentId) => {
-  const response = await axios.get(`${APPOINTMENT_BASE_URL}/api/telemedicine-sessions/appointment/${appointmentId}`);
+  const response = await axios.get(
+    `${APPOINTMENT_BASE_URL}/api/telemedicine-sessions/appointment/${appointmentId}`
+  );
+  return response.data;
+};
+
+export const getTelemedicineSessionById = async (sessionId) => {
+  const response = await axios.get(
+    `${APPOINTMENT_BASE_URL}/api/telemedicine-sessions/${sessionId}`
+  );
   return response.data;
 };
 

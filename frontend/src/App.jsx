@@ -29,58 +29,47 @@ import PatientAppointmentsPage from "./pages/appointments/PatientAppointmentsPag
 import DoctorAppointmentsPage from "./pages/appointments/DoctorAppointmentsPage";
 import AppointmentDetailsPage from "./pages/appointments/AppointmentDetailsPage";
 
-// New Patient Service Pages
+// Patient Service Pages
 import UploadReportPage from "./pages/patient/UploadReportPage";
 import ViewReportsPage from "./pages/patient/ViewReportsPage";
 import MedicalHistoryPage from "./pages/patient/MedicalHistoryPage";
 import PrescriptionsPage from "./pages/patient/PrescriptionsPage";
 
-// it23831254/doctor-availability pages
-import AvailabilityPage from './pages/doctor/availability/AvailabilityPage';
-import AddAvailabilityPage from './pages/doctor/availability/AddAvailabilityPage';
-import ViewAvailabilityPage from './pages/doctor/availability/ViewAvailabilityPage';
+// Doctor Availability Pages
+import AvailabilityPage from "./pages/doctor/availability/AvailabilityPage";
+import AddAvailabilityPage from "./pages/doctor/availability/AddAvailabilityPage";
+import ViewAvailabilityPage from "./pages/doctor/availability/ViewAvailabilityPage";
+
+// Payment + Telemedicine Pages
+import PaymentPage from "./pages/appointments/PaymentPage";
+import PaymentSuccessPage from "./pages/appointments/PaymentSuccessPage";
+import TelemedicineSessionPage from "./pages/appointments/TelemedicineSessionPage";
 
 function App() {
   return (
     <Routes>
       <Route path={APP_ROUTES.HOME} element={<HomePage />} />
 
-      {/* Guest Routes - Only accessible when not logged in */}
+      {/* Guest Routes */}
       <Route element={<GuestRoute />}>
         <Route path={APP_ROUTES.LOGIN} element={<LoginPage />} />
         <Route path={APP_ROUTES.REGISTER} element={<RegisterPage />} />
         <Route path={APP_ROUTES.VERIFY_EMAIL} element={<VerifyEmailPage />} />
-        <Route
-          path={APP_ROUTES.FORGOT_PASSWORD}
-          element={<ForgotPasswordPage />}
-        />
-        <Route
-          path={APP_ROUTES.RESET_PASSWORD}
-          element={<ResetPasswordPage />}
-        />
-        <Route
-          path={APP_ROUTES.VERIFY_ACCOUNT}
-          element={<VerifyAccountPage />}
-        />
+        <Route path={APP_ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
+        <Route path={APP_ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
+        <Route path={APP_ROUTES.VERIFY_ACCOUNT} element={<VerifyAccountPage />} />
       </Route>
 
-      {/* Protected Routes - Require authentication */}
+      {/* Protected Routes */}
       <Route element={<ProtectedRoute />}>
         {/* Status Pages */}
-        <Route
-          path={APP_ROUTES.PENDING_APPROVAL}
-          element={<PendingApprovalPage />}
-        />
-        <Route
-          path={APP_ROUTES.ACCOUNT_BLOCKED}
-          element={<AccountBlockedPage />}
-        />
+        <Route path={APP_ROUTES.PENDING_APPROVAL} element={<PendingApprovalPage />} />
+        <Route path={APP_ROUTES.ACCOUNT_BLOCKED} element={<AccountBlockedPage />} />
 
-        {/* Verified Routes - Require email verification */}
+        {/* Verified Routes */}
         <Route element={<VerifiedRoute />}>
-          {/* Doctor Approval Route - Checks doctor approval status */}
+          {/* Doctor Approval Route */}
           <Route element={<DoctorApprovalRoute />}>
-            
             {/* Admin Routes */}
             <Route
               path={APP_ROUTES.ADMIN_DASHBOARD}
@@ -198,7 +187,6 @@ function App() {
               <Route index element={<EditProfilePage />} />
             </Route>
 
-            {/* Patient Appointment Routes */}
             <Route
               path={APP_ROUTES.PATIENT_BOOK_APPOINTMENT}
               element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
@@ -218,6 +206,20 @@ function App() {
               element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
             >
               <Route index element={<AppointmentDetailsPage />} />
+            </Route>
+
+            <Route
+              path="/patient/appointments/:id/pay"
+              element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
+            >
+              <Route index element={<PaymentPage />} />
+            </Route>
+
+            <Route
+              path="/patient/appointments/:id/payment-success"
+              element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
+            >
+              <Route index element={<PaymentSuccessPage />} />
             </Route>
 
             {/* Patient Medical Service Routes */}
@@ -249,14 +251,25 @@ function App() {
               <Route index element={<PrescriptionsPage />} />
             </Route>
 
+            {/* Telemedicine Route */}
+            <Route
+              path="/patient/telemedicine/:sessionId"
+              element={<RoleProtectedRoute allowedRoles={["Patient", "Doctor"]} />}
+            >
+              <Route index element={<TelemedicineSessionPage />} />
+            </Route>
+
+            <Route
+              path="/doctor/telemedicine/:sessionId"
+              element={<RoleProtectedRoute allowedRoles={["Doctor"]} />}
+            >
+              <Route index element={<TelemedicineSessionPage />} />
+            </Route>
           </Route>
         </Route>
       </Route>
 
-      {/* Unauthorized Page - Access denied */}
       <Route path={APP_ROUTES.UNAUTHORIZED} element={<UnauthorizedPage />} />
-      
-      {/* Catch all - Redirect to home */}
       <Route path="*" element={<Navigate to={APP_ROUTES.HOME} replace />} />
     </Routes>
   );

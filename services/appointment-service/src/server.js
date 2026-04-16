@@ -1,13 +1,13 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import cors from "cors";
 
 import appointmentRoutes from "./routes/appointmentRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import telemedicineSessionRoutes from "./routes/telemedicineSessionRoutes.js";
-
-dotenv.config();
 
 const app = express();
 
@@ -18,6 +18,7 @@ app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
     message: "Appointment Service API is running",
+    stripeConfigured: !!process.env.STRIPE_SECRET_KEY,
   });
 });
 
@@ -29,6 +30,7 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("Connected to MongoDB");
+    console.log("STRIPE_SECRET_KEY loaded:", !!process.env.STRIPE_SECRET_KEY);
 
     const PORT = process.env.PORT || 5004;
     app.listen(PORT, () => {
