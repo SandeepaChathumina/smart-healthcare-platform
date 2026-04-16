@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Eye, EyeOff } from 'lucide-react';
 import AuthLayout from '../../layouts/AuthLayout';
 import AuthCard from '../../components/auth/AuthCard';
 import TextInput from '../../components/ui/TextInput';
@@ -21,6 +22,7 @@ const LoginPage = () => {
 
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -118,7 +120,7 @@ const LoginPage = () => {
         title="Welcome back"
         subtitle="Login to securely access your dashboard and account."
       >
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5 ">
           <TextInput
             label="Email address"
             name="email"
@@ -130,16 +132,40 @@ const LoginPage = () => {
             disabled={submitting}
           />
 
-          <TextInput
-            label="Password"
-            name="password"
-            type="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Enter your password"
-            error={errors.password}
-            disabled={submitting}
-          />
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-slate-700">
+              Password
+            </label>
+
+            <div className="relative">
+              <input
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
+                disabled={submitting}
+                className={`w-full rounded-xl border bg-white px-4 py-3 pr-12 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100 ${
+                  errors.password
+                    ? 'border-red-300 focus:border-red-500 focus:ring-2 focus:ring-red-100'
+                    : 'border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100'
+                }`}
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                disabled={submitting}
+                className="absolute inset-y-0 right-3 flex items-center text-slate-500 transition hover:text-slate-700 disabled:cursor-not-allowed"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+
+            {errors.password ? (
+              <p className="mt-2 text-sm text-red-600">{errors.password}</p>
+            ) : null}
+          </div>
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="mb-3 text-sm font-semibold text-slate-800">Demo accounts</p>

@@ -7,7 +7,7 @@ const AuthSidePanel = () => {
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-20 right-1/4 w-96 h-96 bg-blue-300 rounded-full blur-3xl"></div>
       </div>
-      
+
       <div className="relative">
         <div className="mb-8 flex items-start justify-between gap-4">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-bold tracking-wide text-blue-50 border border-white/20 backdrop-blur">
@@ -33,9 +33,35 @@ const AuthSidePanel = () => {
         </p>
       </div>
 
-      <div className="rounded-xl border border-white/20 bg-white/10 backdrop-blur p-6 text-sm text-blue-50 relative">
-        <div className="flex items-center justify-center h-40 text-blue-200/60">
-          Healthcare authentication system ✓
+      <div className="relative rounded-xl border border-white/20 bg-white/10 p-6 text-blue-50 backdrop-blur">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-blue-200">
+          Trusted platform features
+        </p>
+
+        <div className="mt-4 space-y-4">
+          <div>
+            <h3 className="text-lg font-semibold text-white">Designed for secure healthcare access</h3>
+            <p className="mt-1 text-sm leading-6 text-blue-100/90">
+              Streamlined authentication for patients, doctors, and administrators with
+              controlled access and reliable account protection.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-white/15 bg-white/5 px-4 py-3">
+              <p className="text-sm font-semibold text-white">Role-Based Access</p>
+              <p className="mt-1 text-xs text-blue-100/80">
+                Personalized access for each user role.
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-white/15 bg-white/5 px-4 py-3">
+              <p className="text-sm font-semibold text-white">Verified Security</p>
+              <p className="mt-1 text-xs text-blue-100/80">
+                Email verification and protected account flows.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
