@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import {
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import useAuth from "../../hooks/useAuth";
+import axios from "../../lib/axios";
 import {
   cancelAppointment,
   getAppointmentById,
@@ -25,6 +26,9 @@ import {
   updatePrescription,
   deletePrescription,
 } from "../../services/doctorService";
+
+const AUTH_BASE_URL =
+  import.meta.env.VITE_AUTH_BASE_URL || "http://localhost:5001";
 
 /* ────────────────────────────────────────────
    Helpers
@@ -104,6 +108,25 @@ const formatType = (type) => {
 
 const createEmptyMedicine = () => ({ name: "", dosage: "", frequency: "", duration: "" });
 
+const getDisplayPatientName = (appointment, patient, user) => {
+  return (
+    patient?.fullName ||
+    appointment?.patientName ||
+    appointment?.patient?.fullName ||
+    user?.fullName ||
+    "Patient"
+  );
+};
+
+const getDisplayDoctorName = (appointment, doctor) => {
+  return (
+    doctor?.fullName ||
+    appointment?.doctorName ||
+    appointment?.doctor?.fullName ||
+    "Doctor"
+  );
+};
+
 /* ────────────────────────────────────────────
    Sub-components
 ──────────────────────────────────────────── */
@@ -154,7 +177,7 @@ const MedicineRow = ({ medicine, index, total, onChange, onRemove }) => (
 const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
   const [prescription, setPrescription] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [mode, setMode] = useState("view"); // "view" | "create" | "edit"
+  const [mode, setMode] = useState("view");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [open, setOpen] = useState(true);
@@ -170,7 +193,6 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
   };
   const [form, setForm] = useState(emptyForm);
 
-  /* load prescription for this appointment */
   const loadPrescription = async () => {
     try {
       setLoading(true);
@@ -187,7 +209,6 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
     if (appointmentId) loadPrescription();
   }, [appointmentId]);
 
-  /* populate form when entering edit mode */
   const startEdit = () => {
     if (!prescription) return;
     setForm({
@@ -217,13 +238,11 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
     setMode("create");
   };
 
-  /* validate medicines */
   const validateMedicines = (medicines) =>
     medicines.every((m) =>
       [m.name, m.dosage, m.frequency, m.duration].every((f) => String(f || "").trim())
     );
 
-  /* save (create or update) */
   const handleSave = async () => {
     if (!validateMedicines(form.medicines) || !form.medicines.length) {
       await Swal.fire({
@@ -280,7 +299,6 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
     }
   };
 
-  /* delete */
   const handleDelete = async () => {
     const confirm = await Swal.fire({
       icon: "warning",
@@ -315,7 +333,6 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
     }
   };
 
-  /* medicine field helpers */
   const updateMed = (index, field, value) =>
     setForm((prev) => ({
       ...prev,
@@ -333,10 +350,8 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
       medicines: prev.medicines.filter((_, i) => i !== index),
     }));
 
-  /* ── render ── */
   return (
     <div className="rounded-3xl bg-white shadow-sm ring-1 ring-blue-100">
-      {/* accordion header */}
       <button
         onClick={() => setOpen((p) => !p)}
         className="flex w-full items-center justify-between gap-3 rounded-3xl px-6 py-5 text-left transition hover:bg-blue-50/40"
@@ -365,7 +380,6 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
 
       {open && (
         <div className="border-t border-slate-100 px-6 pb-6 pt-4">
-          {/* Loading */}
           {loading && (
             <div className="flex items-center gap-2 text-sm text-slate-400">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-400 border-t-transparent" />
@@ -373,7 +387,6 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
             </div>
           )}
 
-          {/* VIEW MODE ─ no prescription */}
           {!loading && !prescription && mode === "view" && (
             <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50/40 p-6 text-center">
               <Pill className="mx-auto h-10 w-10 text-blue-300" />
@@ -392,10 +405,8 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
             </div>
           )}
 
-          {/* VIEW MODE ─ existing prescription */}
           {!loading && prescription && mode === "view" && (
             <div className="space-y-4">
-              {/* header row */}
               <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl bg-blue-50/40 p-4">
                 <div>
                   <p className="font-bold text-slate-900">
@@ -414,7 +425,6 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
                 </span>
               </div>
 
-              {/* meta grid */}
               <div className="grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-4">
                 <div className="rounded-2xl bg-slate-50 p-3">
                   <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
@@ -442,7 +452,6 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
                 </div>
               </div>
 
-              {/* medicines list */}
               {!!prescription.medicines?.length && (
                 <div>
                   <p className="mb-3 text-sm font-semibold text-slate-800">
@@ -469,7 +478,6 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
                 </div>
               )}
 
-              {/* action buttons */}
               <div className="flex flex-wrap gap-2 pt-1">
                 <button
                   type="button"
@@ -492,7 +500,6 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
             </div>
           )}
 
-          {/* CREATE / EDIT FORM */}
           {(mode === "create" || mode === "edit") && (
             <div className="space-y-5">
               <div className="flex items-center justify-between">
@@ -508,7 +515,6 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
                 </button>
               </div>
 
-              {/* diagnosis + valid until */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-slate-700">
@@ -535,7 +541,6 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
                 </div>
               </div>
 
-              {/* status + refills */}
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-slate-700">
@@ -578,7 +583,6 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
                 </div>
               </div>
 
-              {/* instructions */}
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
                   Instructions
@@ -592,7 +596,6 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
                 />
               </div>
 
-              {/* medicines */}
               <div>
                 <div className="mb-3 flex items-center justify-between">
                   <p className="text-sm font-semibold text-slate-800">
@@ -620,7 +623,6 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
                 </div>
               </div>
 
-              {/* save / cancel */}
               <div className="flex flex-wrap gap-3 pt-1">
                 <button
                   type="button"
@@ -657,6 +659,8 @@ const AppointmentDetailsPage = () => {
 
   const [appointment, setAppointment] = useState(null);
   const [session, setSession] = useState(null);
+  const [doctorDetails, setDoctorDetails] = useState(null);
+  const [patientDetails, setPatientDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sessionLoading, setSessionLoading] = useState(false);
   const [error, setError] = useState("");
@@ -674,8 +678,10 @@ const AppointmentDetailsPage = () => {
 
   const loadAppointment = async () => {
     try {
+      setError("");
       const data = await getAppointmentById(id);
       const appointmentData = data?.appointment || null;
+
       setAppointment(appointmentData);
       setDoctorForm({
         consultationFee: appointmentData?.consultationFee || "",
@@ -686,20 +692,47 @@ const AppointmentDetailsPage = () => {
         rescheduleReason: appointmentData?.rescheduleReason || "",
       });
 
+      const extraRequests = [];
+
+      if (appointmentData?.doctorId) {
+        extraRequests.push(
+          axios
+            .get(`${AUTH_BASE_URL}/api/patient/doctors/${appointmentData.doctorId}`)
+            .then((res) => setDoctorDetails(res?.data?.doctor || null))
+            .catch(() => setDoctorDetails(null))
+        );
+      } else {
+        setDoctorDetails(null);
+      }
+
+      if (appointmentData?.patientId) {
+        extraRequests.push(
+          axios
+            .get(`${AUTH_BASE_URL}/api/doctor/patients/${appointmentData.patientId}`)
+            .then((res) => setPatientDetails(res?.data?.patient || res?.data?.user || null))
+            .catch(() => setPatientDetails(null))
+        );
+      } else {
+        setPatientDetails(null);
+      }
+
       if (
         appointmentData?.appointmentType === "telemedicine" &&
         (appointmentData?.telemedicineSessionId || appointmentData?.paymentStatus === "paid")
       ) {
         setSessionLoading(true);
-        try {
-          const sessionData = await getTelemedicineSessionByAppointment(id);
-          setSession(sessionData?.session || null);
-        } catch {
-          setSession(null);
-        } finally {
-          setSessionLoading(false);
-        }
+        extraRequests.push(
+          getTelemedicineSessionByAppointment(id)
+            .then((sessionData) => setSession(sessionData?.session || null))
+            .catch(() => setSession(null))
+            .finally(() => setSessionLoading(false))
+        );
+      } else {
+        setSession(null);
+        setSessionLoading(false);
       }
+
+      await Promise.allSettled(extraRequests);
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to load appointment details");
     } finally {
@@ -710,6 +743,16 @@ const AppointmentDetailsPage = () => {
   useEffect(() => {
     if (id) loadAppointment();
   }, [id]);
+
+  const displayPatientName = useMemo(
+    () => getDisplayPatientName(appointment, patientDetails, user),
+    [appointment, patientDetails, user]
+  );
+
+  const displayDoctorName = useMemo(
+    () => getDisplayDoctorName(appointment, doctorDetails),
+    [appointment, doctorDetails]
+  );
 
   const submitDoctorAction = async (status) => {
     if (status === "rejected" && !doctorForm.doctorResponseNote.trim()) {
@@ -822,7 +865,6 @@ const AppointmentDetailsPage = () => {
   return (
     <DashboardLayout title="Appointment Details">
       <div className="space-y-6">
-        {/* Page header */}
         <div className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm">
           <div className="flex flex-wrap items-center gap-3">
             <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
@@ -855,7 +897,6 @@ const AppointmentDetailsPage = () => {
           </p>
         </div>
 
-        {/* Skeleton loading */}
         {loading && (
           <div className="grid gap-4 sm:grid-cols-2">
             {[1, 2, 3, 4].map((item) => (
@@ -872,6 +913,7 @@ const AppointmentDetailsPage = () => {
             {error}
           </div>
         )}
+
         {actionMessage && (
           <div className="rounded-2xl border border-green-200 bg-green-50 p-4 text-green-700">
             {actionMessage}
@@ -880,10 +922,9 @@ const AppointmentDetailsPage = () => {
 
         {appointment && !loading && !error && (
           <>
-            {/* Info grid */}
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <InfoCard label="Patient" value={appointment.patientName || "Patient"} />
-              <InfoCard label="Doctor" value={appointment.doctorName || "Doctor"} />
+              <InfoCard label="Patient" value={displayPatientName} />
+              <InfoCard label="Doctor" value={displayDoctorName} />
               <InfoCard label="Appointment Type" value={formatType(appointment.appointmentType)} />
               <InfoCard
                 label="Preferred Date & Time"
@@ -910,42 +951,6 @@ const AppointmentDetailsPage = () => {
                 value={appointment.doctorResponseNote || "No response yet"}
               />
             </div>
-
-
-            {(appointment.status === "rejected" || appointment.status === "rescheduled") && (
-              <div className="grid gap-4 md:grid-cols-2">
-                {appointment.status === "rejected" && (
-                  <div className="rounded-3xl border border-red-100 bg-red-50 p-5">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-red-500">
-                      Appointment Rejected
-                    </p>
-                    <p className="mt-2 text-sm text-red-700">
-                      {appointment.doctorResponseNote ||
-                        "The doctor rejected this appointment."}
-                    </p>
-                  </div>
-                )}
-
-                {appointment.status === "rescheduled" && (
-                  <div className="rounded-3xl border border-amber-100 bg-amber-50 p-5 md:col-span-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">
-                      Appointment Rescheduled
-                    </p>
-                    <p className="mt-2 text-sm text-amber-700">
-                      {appointment.rescheduleReason ||
-                        "The doctor rescheduled this appointment."}
-                    </p>
-
-                    {appointment.doctorResponseNote && (
-                      <p className="mt-2 text-sm text-amber-700">
-                        <span className="font-semibold">Doctor note:</span>{" "}
-                        {appointment.doctorResponseNote}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* Notes */}
             <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
@@ -976,44 +981,8 @@ const AppointmentDetailsPage = () => {
                   </p>
                 </div>
               </div>
-
-              <div className="mt-6 flex flex-wrap gap-3">
-                {isPatient &&
-                  appointment.status === "awaiting_payment" &&
-                  appointment.paymentStatus !== "paid" && (
-                    <Link
-                      to={`/patient/appointments/${appointment._id}/pay`}
-                      className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition duration-200 hover:scale-[1.02] hover:bg-blue-700"
-                    >
-                      Pay Now
-                    </Link>
-                  )}
-                {appointment.appointmentType === "telemedicine" &&
-                  appointment.paymentStatus === "paid" &&
-                  session?._id &&
-                  isPatient && (
-                    <Link
-                      to={`/patient/telemedicine/${session._id}`}
-                      className="rounded-xl border border-blue-200 bg-white px-5 py-3 font-semibold text-blue-700 transition duration-200 hover:scale-[1.02] hover:bg-blue-50"
-                    >
-                      Open Session
-                    </Link>
-                  )}
-                {appointment.appointmentType === "telemedicine" &&
-                  appointment.paymentStatus === "paid" &&
-                  session?._id &&
-                  isDoctor && (
-                    <Link
-                      to={`/doctor/telemedicine/${session._id}`}
-                      className="rounded-xl border border-blue-200 bg-white px-5 py-3 font-semibold text-blue-700 transition duration-200 hover:scale-[1.02] hover:bg-blue-50"
-                    >
-                      Open Session
-                    </Link>
-                  )}
-              </div>
             </div>
 
-            {/* ── Doctor Action Panel (status management) ── */}
             {isDoctor &&
               ["pending", "rescheduled", "awaiting_payment"].includes(appointment.status) &&
               appointment.paymentStatus !== "paid" && (
@@ -1044,7 +1013,7 @@ const AppointmentDetailsPage = () => {
                     </div>
                     <div>
                       <label className="mb-2 block text-sm font-medium text-slate-700">
-                        Final appointment date &amp; time
+                        Final appointment date & time
                       </label>
                       <input
                         type="datetime-local"
@@ -1104,7 +1073,7 @@ const AppointmentDetailsPage = () => {
                       onClick={() => submitDoctorAction("accepted")}
                       className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
                     >
-                      Accept &amp; Request Payment
+                      Accept & Request Payment
                     </button>
                     <button
                       type="button"
@@ -1134,7 +1103,6 @@ const AppointmentDetailsPage = () => {
                 </div>
               )}
 
-            {/* ── Prescription Panel (doctor only) ── */}
             {isDoctor && (
               <PrescriptionPanel
                 appointmentId={id}
@@ -1143,7 +1111,6 @@ const AppointmentDetailsPage = () => {
               />
             )}
 
-            {/* ── Telemedicine Session ── */}
             {appointment.appointmentType === "telemedicine" && (
               <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
                 <h2 className="text-lg font-bold text-blue-700">Telemedicine Session</h2>

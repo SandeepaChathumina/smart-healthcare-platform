@@ -7,6 +7,7 @@ import {
 } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
+router.get('/doctors/:id', getApprovedDoctorById);
 
 router.use(protect, authorizeRoles('Patient'), ensureEmailVerified);
 
@@ -14,6 +15,6 @@ router.get('/profile', getMyProfile);
 router.put('/profile', updateMyProfile);
 
 router.get('/doctors', getAllApprovedDoctors);
-router.get('/doctors/:id', getApprovedDoctorById);
+
 
 export default router;

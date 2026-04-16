@@ -97,9 +97,37 @@ const getUserContacts = async (userId, token) => {
   }
 };
 
+
+const getUsersContactsBulk = async (userIds, token) => {
+  try {
+    const uniqueUserIds = [...new Set((userIds || []).map(String))];
+
+    if (uniqueUserIds.length === 0) {
+      return [];
+    }
+
+    const response = await axios.post(
+      `${process.env.AUTH_SERVICE_URL}/api/auth/internal/users/contacts`,
+      { userIds: uniqueUserIds },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-internal-api-key": process.env.INTERNAL_SERVICE_API_KEY,
+        },
+      }
+    );
+
+    return response.data.contacts || [];
+  } catch (error) {
+    console.error("Failed to get bulk user contacts:", error.message);
+    return [];
+  }
+};
+
 module.exports = {
   validateAppointment,
   updateAppointmentStatus,
   sendNotification,
   getUserContacts,
+  getUsersContactsBulk
 };

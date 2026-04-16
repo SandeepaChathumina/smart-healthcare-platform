@@ -1,9 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, Calendar, CheckCircle2, Clock, Loader2, Stethoscope } from "lucide-react";
+import {
+  AlertCircle,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Loader2,
+  Stethoscope,
+  UserRound,
+  BadgeInfo,
+} from "lucide-react";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { createAppointment } from "../../services/appointmentService";
 import { getAllAvailabilitySlots } from "../../services/doctorService";
+import axios from "../../lib/axios";
+
+const AUTH_BASE_URL =
+  import.meta.env.VITE_AUTH_BASE_URL || "http://localhost:5001";
 
 const WEEKDAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -82,6 +95,11 @@ const buildIntervals = (slot) => {
   return result;
 };
 
+const getDoctorDetailsById = async (doctorId) => {
+  const response = await axios.get(`${AUTH_BASE_URL}/api/patient/doctors/${doctorId}`);
+  return response.data;
+};
+
 const BookAppointmentPage = () => {
   const navigate = useNavigate();
   const [slots, setSlots] = useState([]);
@@ -104,8 +122,54 @@ const BookAppointmentPage = () => {
   useEffect(() => {
     const loadSlots = async () => {
       try {
+        setLoadingSlots(true);
+        setError("");
+
         const data = await getAllAvailabilitySlots();
-        setSlots(data?.availability || []);
+        const rawSlots = data?.availability || [];
+
+        const uniqueDoctorIds = [...new Set(rawSlots.map((slot) => String(slot.doctorId)).filter(Boolean))];
+
+        const doctorResults = await Promise.allSettled(
+          uniqueDoctorIds.map(async (doctorId) => {
+            const result = await getDoctorDetailsById(doctorId);
+            return result?.doctor || null;
+          })
+        );
+
+        const doctorMap = new Map();
+
+        doctorResults.forEach((result) => {
+          if (result.status === "fulfilled" && result.value?._id) {
+            doctorMap.set(String(result.value._id), result.value);
+          }
+        });
+
+        const mergedSlots = rawSlots.map((slot) => {
+          const doctorDetails = doctorMap.get(String(slot.doctorId));
+
+          return {
+            ...slot,
+            doctor: {
+              ...(slot.doctor || {}),
+              id: doctorDetails?._id || slot.doctorId,
+              fullName:
+                doctorDetails?.fullName ||
+                slot.doctor?.fullName ||
+                "Doctor Name Unavailable",
+              specialization:
+                doctorDetails?.specialization ||
+                "Specialization Unavailable",
+              email: doctorDetails?.email || null,
+              phone: doctorDetails?.phone || null,
+              qualifications: doctorDetails?.qualifications || null,
+              experience: doctorDetails?.experience ?? null,
+              consultationFee: doctorDetails?.consultationFee ?? null,
+            },
+          };
+        });
+
+        setSlots(mergedSlots);
       } catch (err) {
         setError(err?.response?.data?.message || "Failed to load doctor availability");
       } finally {
@@ -190,7 +254,9 @@ const BookAppointmentPage = () => {
         doctorId: selectedSlot.doctorId,
         availabilityId: selectedSlot._id,
         appointmentType:
-          selectedSlot.consultationType === "both" ? formData.appointmentType : selectedSlot.consultationType,
+          selectedSlot.consultationType === "both"
+            ? formData.appointmentType
+            : selectedSlot.consultationType,
         appointmentDate: formData.appointmentDate,
         appointmentTime: formData.appointmentTime,
         reason: formData.reason.trim(),
@@ -267,6 +333,7 @@ const BookAppointmentPage = () => {
                 {filteredSlots.map((slot) => {
                   const selected = selectedSlot?._id === slot._id;
                   const remaining = getRemaining(slot);
+
                   return (
                     <button
                       key={slot._id}
@@ -290,13 +357,28 @@ const BookAppointmentPage = () => {
                       </div>
 
                       <div className="mt-4 space-y-2 text-sm text-slate-600">
+                        <div className="flex items-center gap-2 font-semibold text-slate-900">
+                          <UserRound size={15} className="text-blue-500" />
+                          {slot.doctor?.fullName || "Doctor Name Unavailable"}
+                        </div>
+
+                        <div className="flex items-center gap-2 text-slate-600">
+                          <BadgeInfo size={14} className="text-blue-500" />
+                          {slot.doctor?.specialization || "Specialization Unavailable"}
+                        </div>
+
                         <div className="flex items-center gap-2 font-medium text-slate-800">
-                          <Clock size={14} className="text-blue-500" /> {slot.startTime} - {slot.endTime}
+                          <Clock size={14} className="text-blue-500" />
+                          {slot.startTime} - {slot.endTime}
                         </div>
+
                         <div className="flex items-center gap-2">
-                          <Calendar size={14} className="text-blue-500" /> {formatAvailabilityDay(slot)}
+                          <Calendar size={14} className="text-blue-500" />
+                          {formatAvailabilityDay(slot)}
                         </div>
+
                         <div>{remaining} appointment space(s) left</div>
+
                         {slot.breakTime?.length > 0 && (
                           <div className="text-xs text-slate-500">
                             Breaks: {slot.breakTime.map((item) => `${item.start}-${item.end}`).join(", ")}
@@ -322,8 +404,16 @@ const BookAppointmentPage = () => {
                 <div className="rounded-2xl bg-blue-50 p-4 text-sm text-slate-700">
                   {selectedSlot ? (
                     <>
-                      <div className="font-semibold text-blue-700">{formatAvailabilityDay(selectedSlot)}</div>
-                      <div className="mt-1">{selectedSlot.startTime} - {selectedSlot.endTime}</div>
+                      <div className="font-semibold text-blue-700">
+                        {selectedSlot.doctor?.fullName || "Doctor Name Unavailable"}
+                      </div>
+                      <div className="mt-1 text-slate-600">
+                        {selectedSlot.doctor?.specialization || "Specialization Unavailable"}
+                      </div>
+                      <div className="mt-2 font-medium">{formatAvailabilityDay(selectedSlot)}</div>
+                      <div className="mt-1">
+                        {selectedSlot.startTime} - {selectedSlot.endTime}
+                      </div>
                     </>
                   ) : (
                     "Choose a doctor slot from the left side"

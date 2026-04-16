@@ -14,6 +14,7 @@ const {
   checkTimeAvailability,
   incrementBookedCount,
   decrementBookedCount,
+  getAllAvailabilitySlotsEnriched
 } = require("../controllers/availabilityController");
 
 const router = express.Router();
@@ -36,6 +37,7 @@ router.post("/debug/test", (req, res) => {
 
 // Public/Patient routes - require authentication but not specific role
 router.get("/slots", protect, getAllAvailabilitySlots);
+router.get("/slots/enriched", protect, getAllAvailabilitySlotsEnriched);
 router.get("/check/:doctorId", protect, checkAvailability);
 router.get("/doctor/:doctorId", protect, getAvailableSlotsByDoctor);
 

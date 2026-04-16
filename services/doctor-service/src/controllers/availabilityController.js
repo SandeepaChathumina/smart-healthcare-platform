@@ -1,6 +1,7 @@
 // doctor-service/controllers/availabilityController.js
 
 const Availability = require("../models/Availability");
+const { getUsersContactsBulk } = require("../utils/serviceCaller");
 
 const WEEKDAY_NAMES = [
   "Sunday",
@@ -786,5 +787,50 @@ exports.decrementBookedCount = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.getAllAvailabilitySlotsEnriched = async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+
+    const slots = await Availability.find({ isAvailable: true }).sort({ createdAt: -1 });
+
+    const doctorIds = [...new Set(slots.map((slot) => String(slot.doctorId)))];
+
+    let contacts = [];
+    if (token && doctorIds.length > 0) {
+      contacts = await getUsersContactsBulk(doctorIds, token);
+    }
+
+    const contactMap = new Map(
+      contacts.map((contact) => [String(contact.userId || contact._id), contact])
+    );
+
+    const enrichedSlots = slots.map((slot) => {
+      const doctorContact = contactMap.get(String(slot.doctorId));
+
+      return {
+        ...slot.toObject(),
+        remainingCapacity: Math.max(0, (slot.maxAppointments || 0) - (slot.bookedCount || 0)),
+        doctor: {
+          id: slot.doctorId,
+          fullName: doctorContact?.fullName || "Doctor Name Unavailable",
+          email: doctorContact?.email || null,
+          phone: doctorContact?.phone || null,
+        },
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      count: enrichedSlots.length,
+      availability: enrichedSlots,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
   }
 };
