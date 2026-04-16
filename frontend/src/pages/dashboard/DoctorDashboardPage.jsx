@@ -216,6 +216,20 @@ const DoctorDashboardPage = () => {
       color: 'bg-blue-100 text-blue-600',
     },
     {
+      title: 'Consultation Notes',
+      description: 'Create and manage patient consultation records',
+      icon: FileText,
+      link: '/doctor/consultations',
+      color: 'bg-green-100 text-green-600',
+    },
+    {
+      title: 'Write Prescription',
+      description: 'View all written prescriptions and issue new ones',
+      icon: Pill,
+      link: APP_ROUTES.DOCTOR_PRESCRIPTIONS,
+      color: 'bg-purple-100 text-purple-600',
+    },
+    {
       title: 'Manage Availability',
       description: 'Update available days and consultation hours',
       icon: Clock,

@@ -45,6 +45,7 @@ export const APP_ROUTES = {
 
   DOCTOR_APPOINTMENTS: "/doctor/appointments",
   DOCTOR_APPOINTMENT_DETAILS: "/doctor/appointments/:id",
+  DOCTOR_PRESCRIPTIONS: "/doctor/prescriptions",
 
   // Doctor Availability Routes
   DOCTOR_AVAILABILITY: "/doctor/availability",

@@ -1,19 +1,31 @@
 import { useEffect, useState } from 'react';
-import { Eye, Calendar, FileText } from 'lucide-react';
+import { Calendar, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import DashboardLayout from '../../layouts/DashboardLayout';
-import { getPatientPrescriptions } from '../../services/patientService';
+import useAuth from '../../hooks/useAuth';
+import { getPrescriptionsByPatient } from '../../services/doctorService';
 import { APP_ROUTES } from '../../constants/routes';
 
+const getStatusBadge = (status) => {
+  const value = String(status || '').toLowerCase();
+  if (value === 'active') return 'bg-green-100 text-green-700 ring-green-200';
+  if (value === 'completed') return 'bg-blue-100 text-blue-700 ring-blue-200';
+  if (value === 'expired') return 'bg-amber-100 text-amber-700 ring-amber-200';
+  if (value === 'cancelled') return 'bg-red-100 text-red-700 ring-red-200';
+  return 'bg-slate-100 text-slate-700 ring-slate-200';
+};
+
 const PrescriptionsPage = () => {
+  const { user } = useAuth();
   const [prescriptions, setPrescriptions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const loadPrescriptions = async () => {
     try {
       setLoading(true);
-      const data = await getPatientPrescriptions();
+      if (!user?.id) return;
+      const data = await getPrescriptionsByPatient(user.id, { limit: 100 });
       setPrescriptions(data.prescriptions || []);
     } catch (error) {
       toast.error('Failed to load prescriptions');
@@ -24,7 +36,7 @@ const PrescriptionsPage = () => {
 
   useEffect(() => {
     loadPrescriptions();
-  }, []);
+  }, [user?.id]);
 
   const formatDate = (date) => {
     return new Date(date).toLocaleDateString('en-US', {
@@ -61,36 +73,103 @@ const PrescriptionsPage = () => {
             {prescriptions.map((prescription) => (
               <div
                 key={prescription._id}
-                className="rounded-2xl border border-slate-200 bg-white p-5 transition hover:shadow-md"
+                className="rounded-3xl border border-blue-100 bg-white p-6 shadow-sm transition duration-200 hover:shadow-md"
               >
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-start gap-3">
-                      <div className="text-2xl">📋</div>
-                      <div className="flex-1">
-                        <h3 className="font-bold text-slate-900">{prescription.reportTitle || 'Prescription'}</h3>
-                        <div className="mt-1 flex flex-wrap gap-3 text-xs text-slate-500">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            Issued: {formatDate(prescription.uploadedAt)}
-                          </span>
-                          {prescription.appointmentId && (
-                            <span>Appointment: {prescription.appointmentId}</span>
-                          )}
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900">
+                      {prescription.diagnosis || 'Prescription'}
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Issued by Dr. {prescription.doctorName || 'N/A'}
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${getStatusBadge(
+                      prescription.status
+                    )}`}
+                  >
+                    {prescription.status || 'active'}
+                  </span>
+                </div>
+
+                <div className="mt-4 grid gap-3 text-sm text-slate-600 md:grid-cols-2 xl:grid-cols-4">
+                  <div className="rounded-2xl bg-blue-50/50 p-3">
+                    <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
+                      Issued Date
+                    </p>
+                    <p className="mt-1 font-semibold text-slate-800">
+                      {formatDate(prescription.issuedDate)}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-blue-50/50 p-3">
+                    <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
+                      Valid Until
+                    </p>
+                    <p className="mt-1 font-semibold text-slate-800">
+                      {formatDate(prescription.validUntil)}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-blue-50/50 p-3">
+                    <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
+                      Refills
+                    </p>
+                    <p className="mt-1 font-semibold text-slate-800">
+                      {prescription.refillCount || 0} / {prescription.maxRefills || 0}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl bg-blue-50/50 p-3">
+                    <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
+                      Appointment
+                    </p>
+                    <p className="mt-1 font-semibold text-slate-800">
+                      {prescription.appointmentId || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+
+                {prescription.instructions && (
+                  <div className="mt-4 rounded-2xl bg-slate-50 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                      Instructions
+                    </p>
+                    <p className="mt-2 text-sm text-slate-700">{prescription.instructions}</p>
+                  </div>
+                )}
+
+                {!!prescription.medicines?.length && (
+                  <div className="mt-4">
+                    <p className="text-sm font-semibold text-slate-900">
+                      Medicines ({prescription.medicines.length})
+                    </p>
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      {prescription.medicines.map((medicine, index) => (
+                        <div
+                          key={`${prescription._id}-med-${index}`}
+                          className="rounded-2xl border border-slate-200 bg-white p-4"
+                        >
+                          <p className="font-semibold text-slate-900">
+                            {medicine.name || 'Medicine'}
+                          </p>
+                          <div className="mt-2 space-y-1 text-sm text-slate-600">
+                            <p>Dosage: {medicine.dosage || 'N/A'}</p>
+                            <p>Frequency: {medicine.frequency || 'N/A'}</p>
+                            <p>Duration: {medicine.duration || 'N/A'}</p>
+                            {medicine.timing && <p>Timing: {medicine.timing.replace('_', ' ')}</p>}
+                            {medicine.notes && <p>Notes: {medicine.notes}</p>}
+                          </div>
                         </div>
-                        {prescription.description && (
-                          <p className="mt-2 text-sm text-slate-600">{prescription.description}</p>
-                        )}
-                      </div>
+                      ))}
                     </div>
                   </div>
-                  
+                )}
+
+                <div className="mt-5">
                   <Link
-                    to={`/patient/prescriptions/${prescription._id}`}
-                    className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                    to={`/patient/appointments/${prescription.appointmentId}`}
+                    className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"
                   >
-                    <Eye className="h-4 w-4" />
-                    View Details
+                    Open Related Appointment
                   </Link>
                 </div>
               </div>

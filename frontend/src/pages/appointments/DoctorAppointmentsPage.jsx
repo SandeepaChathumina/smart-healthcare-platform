@@ -193,6 +193,18 @@ const DoctorAppointmentsPage = () => {
                     Manage Appointment
                   </Link>
 
+                  <Link
+                    to={
+                      appointment.appointmentType === "telemedicine" &&
+                      appointment.telemedicineSessionId
+                        ? `/doctor/telemedicine/${appointment.telemedicineSessionId}`
+                        : `/doctor/appointments/${appointment._id}?tab=prescription`
+                    }
+                    className="rounded-xl border border-green-200 bg-white px-5 py-3 text-center font-semibold text-green-700 transition duration-200 hover:scale-[1.02] hover:bg-green-50"
+                  >
+                    Issue Prescription
+                  </Link>
+
                   {appointment.appointmentType === "telemedicine" &&
                     appointment.paymentStatus === "paid" &&
                     appointment.telemedicineSessionId && (
