@@ -53,13 +53,15 @@ const formatDateTime = (value) => {
   if (!value) return "Not scheduled yet";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
+
   return date.toLocaleString("en-GB", {
+    timeZone: "Asia/Colombo",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-    hour12: false,
+    hour12: true,
   });
 };
 
@@ -73,12 +75,26 @@ const formatDate = (value) => {
 
 const toDateTimeLocal = (value) => {
   if (!value) return "";
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  const pad = (n) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
-    date.getHours()
-  )}:${pad(date.getMinutes())}`;
+
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Colombo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(date).reduce((acc, part) => {
+    acc[part.type] = part.value;
+    return acc;
+  }, {});
+
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
 };
 
 const formatType = (type) => {
@@ -719,15 +735,43 @@ const AppointmentDetailsPage = () => {
   };
 
   const handleDoctorCancel = async () => {
+    const confirmCancel = await Swal.fire({
+      icon: "warning",
+      title: "Cancel appointment?",
+      text: "This appointment will be cancelled.",
+      showCancelButton: true,
+      confirmButtonText: "Yes, cancel it",
+      cancelButtonText: "No",
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+    });
+
+    if (!confirmCancel.isConfirmed) return;
+
     try {
       setSubmitting(true);
       setError("");
       setActionMessage("");
+
       await cancelAppointment(id, { cancellationReason: "Cancelled by doctor" });
-      setActionMessage("Appointment cancelled successfully");
       await loadAppointment();
+
+      await Swal.fire({
+        icon: "success",
+        title: "Cancelled",
+        text: "Appointment cancelled successfully.",
+        confirmButtonColor: "#2563eb",
+      });
     } catch (err) {
-      setError(err?.response?.data?.message || "Failed to cancel appointment");
+      const message = err?.response?.data?.message || "Failed to cancel appointment";
+      setError(message);
+
+      await Swal.fire({
+        icon: "error",
+        title: "Cancel Failed",
+        text: message,
+        confirmButtonColor: "#2563eb",
+      });
     } finally {
       setSubmitting(false);
     }
