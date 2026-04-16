@@ -113,7 +113,35 @@ export const getPatientPrescriptionsSummary = async (patientId) => {
   return response.data;
 };
 
-// Doctor Profile endpoints
+// ── Patient-facing Availability endpoints ─────────────────────────────────────
+
+/**
+ * Fetch ALL open availability slots across all doctors.
+ * Used by patients to browse what's available before choosing a doctor.
+ * Maps to: GET /api/doctor/availability/slots  (requires auth, any role)
+ */
+export const getAllAvailabilitySlots = async () => {
+  const response = await axios.get(`${DOCTOR_BASE_URL}/api/doctor/availability/slots`);
+  return response.data;
+};
+
+/**
+ * Fetch available slots for a specific doctor, with optional date/type filters.
+ * Only returns slots where bookedCount < maxAppointments.
+ * Maps to: GET /api/doctor/availability/doctor/:doctorId?date=&consultationType=
+ */
+export const getAvailableSlotsByDoctor = async (doctorId, { date, consultationType } = {}) => {
+  const params = new URLSearchParams();
+  if (date) params.append('date', date);
+  if (consultationType && consultationType !== 'both') {
+    params.append('consultationType', consultationType === 'physical' ? 'in_person' : consultationType);
+  }
+  const query = params.toString() ? `?${params.toString()}` : '';
+  const response = await axios.get(`${DOCTOR_BASE_URL}/api/doctor/availability/doctor/${doctorId}${query}`);
+  return response.data;
+};
+
+// ── Doctor Profile endpoints ──────────────────────────────────────────────────
 export const getDoctorProfile = async () => {
   const response = await axios.get(`${DOCTOR_BASE_URL}/api/doctor/profile`);
   return response.data;
