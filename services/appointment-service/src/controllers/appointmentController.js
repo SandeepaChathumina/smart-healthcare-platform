@@ -17,28 +17,94 @@ const normalizeAppointmentType = (value) => {
   return value;
 };
 
+const SRI_LANKA_OFFSET_MINUTES = 330;
+const SRI_LANKA_OFFSET_MS = SRI_LANKA_OFFSET_MINUTES * 60 * 1000;
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || "http://localhost:5001";
+
+const createSriLankaDate = (year, month, day, hours = 0, minutes = 0) => {
+  return new Date(Date.UTC(year, month - 1, day, hours, minutes) - SRI_LANKA_OFFSET_MS);
+};
+
+const getSriLankaParts = (value) => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const sriLankaDate = new Date(date.getTime() + SRI_LANKA_OFFSET_MS);
+
+  return {
+    year: sriLankaDate.getUTCFullYear(),
+    month: sriLankaDate.getUTCMonth() + 1,
+    day: sriLankaDate.getUTCDate(),
+    hours: sriLankaDate.getUTCHours(),
+    minutes: sriLankaDate.getUTCMinutes(),
+  };
+};
+
 const parseDateOnly = (dateValue) => {
   if (!dateValue) return null;
 
   if (typeof dateValue === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
     const [year, month, day] = dateValue.split("-").map(Number);
-    return new Date(year, month - 1, day);
+    return createSriLankaDate(year, month, day);
   }
 
-  const date = new Date(dateValue);
-  if (Number.isNaN(date.getTime())) return null;
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const parts = getSriLankaParts(dateValue);
+  if (!parts) return null;
+
+  return createSriLankaDate(parts.year, parts.month, parts.day);
 };
 
 const combineDateAndTime = (dateValue, timeValue) => {
-  const date = parseDateOnly(dateValue);
-  if (!date || !/^([0-1]?\d|2[0-3]):[0-5]\d$/.test(String(timeValue || ""))) {
+  if (!dateValue || !/^([0-1]?\d|2[0-3]):[0-5]\d$/.test(String(timeValue || ""))) {
     return null;
   }
 
+  let year;
+  let month;
+  let day;
+
+  if (typeof dateValue === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    [year, month, day] = dateValue.split("-").map(Number);
+  } else {
+    const parts = getSriLankaParts(dateValue);
+    if (!parts) return null;
+    year = parts.year;
+    month = parts.month;
+    day = parts.day;
+  }
+
   const [hours, minutes] = String(timeValue).split(":").map(Number);
-  date.setHours(hours, minutes, 0, 0);
+  return createSriLankaDate(year, month, day, hours, minutes);
+};
+
+const parseSriLankaDateTimeLocal = (value) => {
+  if (!value) return null;
+
+  const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+
+  if (match) {
+    const [, year, month, day, hours, minutes] = match.map(Number);
+    return createSriLankaDate(year, month, day, hours, minutes);
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
   return date;
+};
+
+const formatSriLankaDateTime = (value) => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "Invalid date";
+
+  return date.toLocaleString("en-GB", {
+    timeZone: "Asia/Colombo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
 };
 
 const minutesFromTime = (timeValue) => {
@@ -112,7 +178,12 @@ const validateCommonTextFields = ({ reason, symptomsSummary, patientNotes, docto
   return null;
 };
 
-const findConflictingAppointment = async ({ doctorId, startDateTime, durationMinutes, excludeAppointmentId = null }) => {
+const findConflictingAppointment = async ({
+  doctorId,
+  startDateTime,
+  durationMinutes,
+  excludeAppointmentId = null,
+}) => {
   const endDateTime = addMinutes(startDateTime, durationMinutes);
 
   const query = {
@@ -148,7 +219,13 @@ const findConflictingAppointment = async ({ doctorId, startDateTime, durationMin
   });
 };
 
-const fetchAndValidateSlot = async ({ doctorId, availabilityId, appointmentDate, appointmentType, token }) => {
+const fetchAndValidateSlot = async ({
+  doctorId,
+  availabilityId,
+  appointmentDate,
+  appointmentType,
+  token,
+}) => {
   const date = parseDateOnly(appointmentDate);
   if (!date) {
     throw new Error("A valid appointment date is required");
@@ -156,7 +233,11 @@ const fetchAndValidateSlot = async ({ doctorId, availabilityId, appointmentDate,
 
   const data = await getAvailableSlotsByDoctor(
     doctorId,
-    [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-"),
+    [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-"),
     appointmentType,
     token
   );
@@ -178,13 +259,13 @@ const fetchAndValidateSlot = async ({ doctorId, availabilityId, appointmentDate,
 const getUserDirectory = async (userIds = []) => {
   const uniqueIds = [...new Set(userIds.filter(Boolean).map((id) => String(id)))];
 
-  if (!uniqueIds.length || !process.env.AUTH_SERVICE_URL || !process.env.INTERNAL_SERVICE_API_KEY) {
+  if (!uniqueIds.length || !process.env.INTERNAL_SERVICE_API_KEY) {
     return {};
   }
 
   try {
     const response = await axios.post(
-      `${process.env.AUTH_SERVICE_URL}/api/auth/internal/users/contacts`,
+      `${AUTH_SERVICE_URL}/api/auth/internal/users/contacts`,
       { userIds: uniqueIds },
       {
         headers: {
@@ -328,7 +409,9 @@ export const createAppointment = async (req, res) => {
     if (conflictingAppointment) {
       const conflictStart = getAppointmentStart(conflictingAppointment);
       return res.status(400).json({
-        message: `This doctor already has an appointment at ${new Date(conflictStart).toLocaleString()}. Please choose another 30 minute time slot.`,
+        message: `This doctor already has an appointment at ${formatSriLankaDateTime(
+          conflictStart
+        )}. Please choose another 30 minute time slot.`,
       });
     }
 
@@ -540,6 +623,7 @@ export const updateAppointmentStatus = async (req, res) => {
       symptomsSummary: appointment.symptomsSummary,
       patientNotes: appointment.patientNotes,
     });
+
     if (textError) {
       return res.status(400).json({ message: textError });
     }
@@ -547,8 +631,8 @@ export const updateAppointmentStatus = async (req, res) => {
     let nextScheduledDateTime = appointment.scheduledDateTime || appointment.preferredDateTime;
 
     if (scheduledDateTime) {
-      const parsed = new Date(scheduledDateTime);
-      if (Number.isNaN(parsed.getTime())) {
+      const parsed = parseSriLankaDateTimeLocal(scheduledDateTime);
+      if (!parsed || Number.isNaN(parsed.getTime())) {
         return res.status(400).json({ message: "Invalid scheduledDateTime" });
       }
       if (parsed <= new Date()) {
@@ -560,7 +644,9 @@ export const updateAppointmentStatus = async (req, res) => {
     if (["accepted", "awaiting_payment", "rescheduled"].includes(status)) {
       const feeValue = Number(consultationFee ?? appointment.consultationFee);
       if (!Number.isFinite(feeValue) || feeValue <= 0) {
-        return res.status(400).json({ message: "Doctor must set a valid consultation fee before requesting payment" });
+        return res.status(400).json({
+          message: "Doctor must set a valid consultation fee before requesting payment",
+        });
       }
 
       const conflictingAppointment = await findConflictingAppointment({

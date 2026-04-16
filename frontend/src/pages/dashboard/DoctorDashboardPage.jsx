@@ -22,13 +22,15 @@ const formatDateTime = (value) => {
   if (!value) return 'Not scheduled yet';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
+
   return date.toLocaleString('en-GB', {
+    timeZone: 'Asia/Colombo',
     day: '2-digit',
     month: 'short',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false,
+    hour12: true,
   });
 };
 
@@ -117,12 +119,6 @@ const AppointmentCard = ({ appointment }) => {
           >
             View Details
           </Link>
-          <Link
-            to={`/doctor/appointments/${appointment._id}`}
-            className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-blue-700"
-          >
-            Consultant Notes
-          </Link>
         </div>
       </div>
     </div>
@@ -146,38 +142,19 @@ const UpcomingAppointmentsWidget = ({ appointments }) => {
   return (
     <div className="space-y-3">
       {upcoming.map((appointment) => (
-        <div key={appointment._id} className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
+        <div
+          key={appointment._id}
+          className="flex items-center justify-between rounded-lg bg-slate-50 p-3"
+        >
           <div>
-            <p className="text-sm font-medium text-slate-900">Patient: {appointment.patientId}</p>
+            <p className="text-sm font-medium text-slate-900">
+              Patient: {appointment.patientName || 'Patient'}
+            </p>
             <p className="text-xs text-slate-500">
-              {new Date(appointment.preferredDateTime).toLocaleDateString()}
+              {formatDateTime(appointment.scheduledDateTime || appointment.preferredDateTime)}
             </p>
           </div>
-          <div className="flex gap-2">
-            {appointment.status === 'pending' && (
-              <button
-                onClick={() => onAccept(appointment._id)}
-                className="rounded-lg bg-green-600 px-2 py-1 text-xs text-white"
-              >
-                Accept
-              </button>
-            )}
-            <Link
-              to={`/doctor/appointments/${appointment._id}`}
-              className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
-            >
-              View
-            </Link>
-            <Link
-              to={`/doctor/appointments/${appointment._id}`}
-              className="rounded-lg bg-blue-600 px-2 py-1 text-xs text-white"
-            >
-              Notes
-            </Link>
-            <p className="text-sm font-medium text-slate-900">Patient: {appointment.patientName || 'Patient'}</p>
-            <p className="text-xs text-slate-500">{formatDateTime(appointment.scheduledDateTime || appointment.preferredDateTime)}</p>
 
-          </div>
           <Link
             to={`/doctor/appointments/${appointment._id}`}
             className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
