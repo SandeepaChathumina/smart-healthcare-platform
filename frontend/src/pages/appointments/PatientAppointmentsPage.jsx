@@ -256,6 +256,41 @@ const PatientAppointmentsPage = () => {
                       </p>
                     </div>
                   </div>
+
+
+                  {(appointment.status === "rejected" || appointment.status === "rescheduled") && (
+                    <div className="space-y-3">
+                      {appointment.status === "rejected" && (
+                        <div className="rounded-2xl border border-red-100 bg-red-50 p-4">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-red-500">
+                            Rejection Reason
+                          </p>
+                          <p className="mt-2 text-sm font-medium text-red-700">
+                            {appointment.doctorResponseNote || "The doctor rejected this appointment."}
+                          </p>
+                        </div>
+                      )}
+
+                      {appointment.status === "rescheduled" && (
+                        <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
+                          <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">
+                            Reschedule Update
+                          </p>
+                          <p className="mt-2 text-sm font-medium text-amber-700">
+                            {appointment.rescheduleReason ||
+                              "Your appointment was rescheduled by the doctor."}
+                          </p>
+                          {appointment.doctorResponseNote && (
+                            <p className="mt-2 text-sm text-amber-700">
+                              <span className="font-semibold">Doctor note:</span>{" "}
+                              {appointment.doctorResponseNote}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                 </div>
 
                 <div className="flex flex-wrap gap-3 md:w-auto md:flex-col">

@@ -712,6 +712,26 @@ const AppointmentDetailsPage = () => {
   }, [id]);
 
   const submitDoctorAction = async (status) => {
+    if (status === "rejected" && !doctorForm.doctorResponseNote.trim()) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Reason required",
+        text: "Please enter a rejection reason for the patient.",
+        confirmButtonColor: "#2563eb",
+      });
+      return;
+    }
+
+    if (status === "rescheduled" && !doctorForm.rescheduleReason.trim()) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Reason required",
+        text: "Please enter a reschedule reason for the patient.",
+        confirmButtonColor: "#2563eb",
+      });
+      return;
+    }
+
     try {
       setSubmitting(true);
       setError("");
@@ -725,10 +745,32 @@ const AppointmentDetailsPage = () => {
       };
       const response = await updateAppointmentStatus(id, payload);
       setAppointment(response?.appointment || null);
-      setActionMessage("Appointment updated successfully");
+
+      const successTextMap = {
+        accepted: "Appointment accepted and payment requested successfully.",
+        rescheduled: "Appointment rescheduled successfully.",
+        rejected: "Appointment rejected successfully.",
+      };
+
+      setActionMessage(successTextMap[status] || "Appointment updated successfully");
       await loadAppointment();
+
+      await Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: successTextMap[status] || "Appointment updated successfully.",
+        confirmButtonColor: "#2563eb",
+      });
     } catch (err) {
-      setError(err?.response?.data?.message || "Failed to update appointment");
+      const message = err?.response?.data?.message || "Failed to update appointment";
+      setError(message);
+
+      await Swal.fire({
+        icon: "error",
+        title: "Update Failed",
+        text: message,
+        confirmButtonColor: "#2563eb",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -869,6 +911,42 @@ const AppointmentDetailsPage = () => {
               />
             </div>
 
+
+            {(appointment.status === "rejected" || appointment.status === "rescheduled") && (
+              <div className="grid gap-4 md:grid-cols-2">
+                {appointment.status === "rejected" && (
+                  <div className="rounded-3xl border border-red-100 bg-red-50 p-5">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-red-500">
+                      Appointment Rejected
+                    </p>
+                    <p className="mt-2 text-sm text-red-700">
+                      {appointment.doctorResponseNote ||
+                        "The doctor rejected this appointment."}
+                    </p>
+                  </div>
+                )}
+
+                {appointment.status === "rescheduled" && (
+                  <div className="rounded-3xl border border-amber-100 bg-amber-50 p-5 md:col-span-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-amber-600">
+                      Appointment Rescheduled
+                    </p>
+                    <p className="mt-2 text-sm text-amber-700">
+                      {appointment.rescheduleReason ||
+                        "The doctor rescheduled this appointment."}
+                    </p>
+
+                    {appointment.doctorResponseNote && (
+                      <p className="mt-2 text-sm text-amber-700">
+                        <span className="font-semibold">Doctor note:</span>{" "}
+                        {appointment.doctorResponseNote}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Notes */}
             <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
               <h2 className="text-lg font-bold text-blue-700">Notes</h2>
@@ -997,7 +1075,7 @@ const AppointmentDetailsPage = () => {
                           }))
                         }
                         className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
-                        placeholder="Optional note for patient"
+                        placeholder="Required when rejecting. Optional for accepted or rescheduled."
                       />
                     </div>
                     <div>
@@ -1014,7 +1092,7 @@ const AppointmentDetailsPage = () => {
                           }))
                         }
                         className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
-                        placeholder="Use only when changing the requested time"
+                        placeholder="Required when rescheduling this appointment"
                       />
                     </div>
                   </div>

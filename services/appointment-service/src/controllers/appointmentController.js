@@ -424,11 +424,9 @@ export const createAppointment = async (req, res) => {
       (!Array.isArray(uploadedReportIds) ||
         uploadedReportIds.some((id) => !isValidObjectId(id)))
     ) {
-      return res
-        .status(400)
-        .json({
-          message: "uploadedReportIds must be an array of valid ObjectIds",
-        });
+      return res.status(400).json({
+        message: "uploadedReportIds must be an array of valid ObjectIds",
+      });
     }
 
     if (!["telemedicine", "in_person"].includes(normalizedType)) {
@@ -489,11 +487,9 @@ export const createAppointment = async (req, res) => {
     }
 
     if (isWithinBreak(selectedSlot, appointmentTime, bookingDuration)) {
-      return res
-        .status(400)
-        .json({
-          message: "Selected time falls inside the doctor's break time",
-        });
+      return res.status(400).json({
+        message: "Selected time falls inside the doctor's break time",
+      });
     }
 
     const conflictingAppointment = await findConflictingAppointment({
@@ -726,6 +722,19 @@ export const updateAppointmentStatus = async (req, res) => {
       "cancelled",
     ];
 
+    if (status === "rejected" && !String(doctorResponseNote || "").trim()) {
+      return res.status(400).json({
+        message: "Doctor must provide a reason when rejecting an appointment",
+      });
+    }
+
+    if (status === "rescheduled" && !String(rescheduleReason || "").trim()) {
+      return res.status(400).json({
+        message:
+          "Doctor must provide a reason when rescheduling an appointment",
+      });
+    }
+
     if (req.user.role === "Doctor" && !doctorAllowedStatuses.includes(status)) {
       return res.status(400).json({
         message:
@@ -787,7 +796,7 @@ export const updateAppointmentStatus = async (req, res) => {
       if (conflictingAppointment) {
         const conflictStart = getAppointmentStart(conflictingAppointment);
         return res.status(400).json({
-          message: `Doctor already has another appointment at ${new Date(conflictStart).toLocaleString()}`,
+          message: `Doctor already has another appointment at ${formatSriLankaDateTime(conflictStart)}`,
         });
       }
 
@@ -820,8 +829,17 @@ export const updateAppointmentStatus = async (req, res) => {
         : "";
     }
 
-    if (rescheduleReason !== undefined && status !== "rescheduled") {
-      appointment.rescheduleReason = rescheduleReason;
+    if (status === "rejected") {
+      appointment.doctorResponseNote = String(doctorResponseNote || "").trim();
+    }
+
+    if (status === "rescheduled") {
+      appointment.rescheduleReason = String(rescheduleReason || "").trim();
+      if (doctorResponseNote !== undefined) {
+        appointment.doctorResponseNote = doctorResponseNote
+          ? String(doctorResponseNote).trim()
+          : "";
+      }
     }
 
     if (cancellationReason !== undefined && status !== "cancelled") {
