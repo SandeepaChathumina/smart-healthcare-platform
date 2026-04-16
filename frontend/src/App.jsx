@@ -39,6 +39,7 @@ import PrescriptionsPage from "./pages/patient/PrescriptionsPage";
 import AvailabilityPage from "./pages/doctor/availability/AvailabilityPage";
 import AddAvailabilityPage from "./pages/doctor/availability/AddAvailabilityPage";
 import ViewAvailabilityPage from "./pages/doctor/availability/ViewAvailabilityPage";
+import DoctorPrescriptionsPage from "./pages/doctor/DoctorPrescriptionsPage";
 
 // Payment + Telemedicine Pages
 import PaymentPage from "./pages/appointments/PaymentPage";
@@ -163,6 +164,13 @@ function App() {
               <Route index element={<AvailabilityPage />} />
               <Route path="new" element={<AddAvailabilityPage />} />
               <Route path=":id" element={<ViewAvailabilityPage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.DOCTOR_PRESCRIPTIONS}
+              element={<RoleProtectedRoute allowedRoles={["Doctor"]} />}
+            >
+              <Route index element={<DoctorPrescriptionsPage />} />
             </Route>
 
             {/* Patient Routes */}

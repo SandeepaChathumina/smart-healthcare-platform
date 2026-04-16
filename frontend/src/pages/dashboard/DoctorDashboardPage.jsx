@@ -271,9 +271,9 @@ const DoctorDashboardPage = () => {
     },
     {
       title: 'Write Prescription',
-      description: 'Issue prescriptions for your patients',
+      description: 'View all written prescriptions and issue new ones',
       icon: Pill,
-      link: '/doctor/prescriptions/create',
+      link: APP_ROUTES.DOCTOR_PRESCRIPTIONS,
       color: 'bg-purple-100 text-purple-600',
     },
     {
