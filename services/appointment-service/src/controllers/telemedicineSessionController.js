@@ -70,7 +70,7 @@ export const createTelemedicineSession = async (req, res) => {
     });
 
     if (existingSession) {
-      return res.status(400).json({
+      return res.status(200).json({
         message: "Telemedicine session already exists for this appointment",
         session: existingSession,
       });
@@ -96,7 +96,6 @@ export const createTelemedicineSession = async (req, res) => {
 
     appointment.isTelemedicineLinkGenerated = true;
     appointment.telemedicineSessionId = session._id;
-
     await appointment.save();
 
     return res.status(201).json({
@@ -171,10 +170,59 @@ export const getTelemedicineSessionById = async (req, res) => {
   }
 };
 
+export const getTelemedicineSessionByAppointment = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+
+    if (!isValidObjectId(appointmentId)) {
+      return res.status(400).json({
+        message: "Invalid appointment ID",
+      });
+    }
+
+    const appointment = await Appointment.findById(appointmentId);
+
+    if (!appointment) {
+      return res.status(404).json({
+        message: "Appointment not found",
+      });
+    }
+
+    const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
+
+    if (
+      req.user.role !== "Admin" &&
+      String(loggedInUserId) !== String(appointment.patientId) &&
+      String(loggedInUserId) !== String(appointment.doctorId)
+    ) {
+      return res.status(403).json({
+        message: "Access denied",
+      });
+    }
+
+    const session = await TelemedicineSession.findOne({ appointmentId });
+
+    if (!session) {
+      return res.status(404).json({
+        message: "Telemedicine session not found for this appointment",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      session,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
 export const getTelemedicineSessionsByPatient = async (req, res) => {
   try {
     const { patientId } = req.params;
-
     const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
 
     if (!isValidObjectId(patientId)) {
@@ -212,7 +260,6 @@ export const getTelemedicineSessionsByPatient = async (req, res) => {
 export const getTelemedicineSessionsByDoctor = async (req, res) => {
   try {
     const { doctorId } = req.params;
-
     const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
 
     if (!isValidObjectId(doctorId)) {

@@ -41,14 +41,38 @@ const PatientAppointmentsPage = () => {
               <p><strong>Doctor ID:</strong> {appointment.doctorId}</p>
               <p><strong>Type:</strong> {appointment.appointmentType}</p>
               <p><strong>Status:</strong> {appointment.status}</p>
+              <p><strong>Payment Status:</strong> {appointment.paymentStatus}</p>
               <p><strong>Preferred Time:</strong> {appointment.preferredDateTime}</p>
 
-              <Link
-                to={`/patient/appointments/${appointment._id}`}
-                className="mt-3 inline-block text-sm font-medium text-blue-600"
-              >
-                View Details
-              </Link>
+              <div className="mt-3 flex flex-wrap gap-3">
+                <Link
+                  to={`/patient/appointments/${appointment._id}`}
+                  className="inline-block text-sm font-medium text-blue-600"
+                >
+                  View Details
+                </Link>
+
+                {appointment.status === 'awaiting_payment' &&
+                  appointment.paymentStatus !== 'paid' && (
+                    <Link
+                      to={`/patient/appointments/${appointment._id}/pay`}
+                      className="inline-block text-sm font-medium text-green-600"
+                    >
+                      Pay Now
+                    </Link>
+                  )}
+
+                {appointment.appointmentType === 'telemedicine' &&
+                  appointment.paymentStatus === 'paid' &&
+                  appointment.telemedicineSessionId && (
+                    <Link
+                      to={`/patient/telemedicine/${appointment.telemedicineSessionId}`}
+                      className="inline-block text-sm font-medium text-purple-600"
+                    >
+                      Join Session
+                    </Link>
+                  )}
+              </div>
             </div>
           ))}
         </div>

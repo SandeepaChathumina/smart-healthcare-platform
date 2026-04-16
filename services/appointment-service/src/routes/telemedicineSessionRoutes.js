@@ -3,6 +3,7 @@ import {
   createTelemedicineSession,
   getAllTelemedicineSessions,
   getTelemedicineSessionById,
+  getTelemedicineSessionByAppointment,
   getTelemedicineSessionsByPatient,
   getTelemedicineSessionsByDoctor,
   updateTelemedicineSessionStatus,
@@ -15,6 +16,7 @@ router.post("/:appointmentId", protect, createTelemedicineSession);
 router.get("/", protect, getAllTelemedicineSessions);
 router.get("/patient/:patientId", protect, getTelemedicineSessionsByPatient);
 router.get("/doctor/:doctorId", protect, getTelemedicineSessionsByDoctor);
+router.get("/appointment/:appointmentId", protect, getTelemedicineSessionByAppointment);
 router.patch("/:id/status", protect, updateTelemedicineSessionStatus);
 router.get("/:id", protect, getTelemedicineSessionById);
 
