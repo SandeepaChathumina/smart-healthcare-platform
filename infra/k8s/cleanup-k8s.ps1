@@ -1,3 +1,6 @@
+kubectl delete -f ai-feature-service.yaml --ignore-not-found
+kubectl delete -f ai-feature-deployment.yaml --ignore-not-found
+
 kubectl delete -f frontend-service.yaml --ignore-not-found
 kubectl delete -f frontend-deployment.yaml --ignore-not-found
 
@@ -22,6 +25,7 @@ kubectl delete secret doctor-service-secret --ignore-not-found
 kubectl delete secret appointment-service-secret --ignore-not-found
 kubectl delete secret notification-service-secret --ignore-not-found
 kubectl delete secret frontend-secret --ignore-not-found
+kubectl delete secret ai-feature-secret --ignore-not-found
 
 kubectl get pods
 kubectl get services

@@ -8,11 +8,6 @@ import {
   getTelemedicineSessionByAppointment,
   updateAppointmentStatus,
 } from "../../services/appointmentService";
-import {
-  createConsultationNote,
-  getConsultationNoteByAppointment,
-  updateConsultationNote,
-} from "../../services/doctorService";
 
 const badgeClass = (value) => {
   const status = String(value || "").toLowerCase();
@@ -29,7 +24,14 @@ const formatDateTime = (value) => {
   if (!value) return "Not scheduled yet";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString();
+  return date.toLocaleString("en-GB", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 };
 
 const toDateTimeLocal = (value) => {
@@ -45,20 +47,6 @@ const toDateTimeLocal = (value) => {
 const formatType = (type) => {
   if (!type) return "Appointment";
   return type === "telemedicine" ? "Telemedicine" : "In Person";
-};
-
-const formatDate = (value) => {
-  if (!value) return "Not set";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString();
-};
-
-const toISOStringOrNull = (value) => {
-  if (!value) return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toISOString();
 };
 
 const InfoCard = ({ label, value }) => (
@@ -79,18 +67,6 @@ const AppointmentDetailsPage = () => {
   const [error, setError] = useState("");
   const [actionMessage, setActionMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [consultationLoading, setConsultationLoading] = useState(false);
-  const [consultationMessage, setConsultationMessage] = useState("");
-  const [consultationError, setConsultationError] = useState("");
-  const [consultationNote, setConsultationNote] = useState(null);
-  const [consultationForm, setConsultationForm] = useState({
-    notes: "",
-    diagnosis: "",
-    treatmentPlan: "",
-    followUpRequired: false,
-    followUpDate: "",
-    followUpNotes: "",
-  });
   const [doctorForm, setDoctorForm] = useState({
     consultationFee: "",
     scheduledDateTime: "",
@@ -100,40 +76,6 @@ const AppointmentDetailsPage = () => {
 
   const isPatient = user?.role === "Patient";
   const isDoctor = user?.role === "Doctor";
-  const canDoctorManageConsultationNote =
-    isDoctor && ["confirmed", "completed"].includes(String(appointment?.status || "").toLowerCase());
-
-  const populateConsultationForm = (note) => {
-    setConsultationForm({
-      notes: note?.notes || "",
-      diagnosis: note?.diagnosis || "",
-      treatmentPlan: note?.treatmentPlan || "",
-      followUpRequired: Boolean(note?.followUpRequired),
-      followUpDate: note?.followUpDate ? toDateTimeLocal(note.followUpDate) : "",
-      followUpNotes: note?.followUpNotes || "",
-    });
-  };
-
-  const loadConsultationNote = async (appointmentId) => {
-    if (!appointmentId) return;
-    try {
-      setConsultationLoading(true);
-      setConsultationError("");
-      const response = await getConsultationNoteByAppointment(appointmentId);
-      const note = response?.consultationNote || null;
-      setConsultationNote(note);
-      populateConsultationForm(note);
-    } catch (err) {
-      if (err?.response?.status === 404) {
-        setConsultationNote(null);
-        populateConsultationForm(null);
-      } else {
-        setConsultationError(err?.response?.data?.message || "Failed to load consultation note");
-      }
-    } finally {
-      setConsultationLoading(false);
-    }
-  };
 
   const loadAppointment = async () => {
     try {
@@ -163,8 +105,6 @@ const AppointmentDetailsPage = () => {
           setSessionLoading(false);
         }
       }
-
-      await loadConsultationNote(id);
     } catch (err) {
       setError(err?.response?.data?.message || "Failed to load appointment details");
     } finally {
@@ -216,69 +156,6 @@ const AppointmentDetailsPage = () => {
     }
   };
 
-  const handleConsultationSubmit = async () => {
-    if (!consultationForm.notes.trim()) {
-      setConsultationError("Consultation notes are required");
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      setConsultationError("");
-      setConsultationMessage("");
-
-      const payload = {
-        appointmentId: id,
-        notes: consultationForm.notes.trim(),
-        diagnosis: consultationForm.diagnosis.trim(),
-        treatmentPlan: consultationForm.treatmentPlan.trim(),
-        followUpRequired: consultationForm.followUpRequired,
-        followUpDate: consultationForm.followUpRequired
-          ? toISOStringOrNull(consultationForm.followUpDate)
-          : null,
-        followUpNotes: consultationForm.followUpRequired ? consultationForm.followUpNotes.trim() : "",
-      };
-
-      let response;
-      if (consultationNote?._id) {
-        response = await updateConsultationNote(consultationNote._id, payload);
-        setConsultationMessage("Consultation note updated successfully");
-      } else {
-        try {
-          response = await createConsultationNote(payload);
-          setConsultationMessage("Consultation note saved successfully");
-        } catch (createError) {
-          const message = createError?.response?.data?.message || "";
-          if (message.toLowerCase().includes("already exists")) {
-            const existing = await getConsultationNoteByAppointment(id);
-            const existingId = existing?.consultationNote?._id;
-            if (existingId) {
-              response = await updateConsultationNote(existingId, payload);
-              setConsultationMessage("Existing consultation note updated successfully");
-            } else {
-              throw createError;
-            }
-          } else {
-            throw createError;
-          }
-        }
-      }
-
-      const note = response?.consultationNote || null;
-      setConsultationNote(note);
-      populateConsultationForm(note);
-    } catch (err) {
-      setConsultationError(
-        err?.response?.data?.message ||
-          err?.response?.data?.error ||
-          err?.message ||
-          "Failed to save consultation note"
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   return (
     <DashboardLayout title="Appointment Details">
       <div className="space-y-6">
@@ -325,16 +202,12 @@ const AppointmentDetailsPage = () => {
         {actionMessage && (
           <div className="rounded-2xl border border-green-200 bg-green-50 p-4 text-green-700">{actionMessage}</div>
         )}
-        {consultationMessage && (
-          <div className="rounded-2xl border border-green-200 bg-green-50 p-4 text-green-700">{consultationMessage}</div>
-        )}
-        {consultationError && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700">{consultationError}</div>
-        )}
 
         {appointment && !loading && !error && (
           <>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <InfoCard label="Patient" value={appointment.patientName || "Patient"} />
+              <InfoCard label="Doctor" value={appointment.doctorName || "Doctor"} />
               <InfoCard label="Appointment Type" value={formatType(appointment.appointmentType)} />
               <InfoCard label="Preferred Date & Time" value={formatDateTime(appointment.preferredDateTime)} />
               <InfoCard label="Scheduled Date & Time" value={formatDateTime(appointment.scheduledDateTime)} />
@@ -389,134 +262,6 @@ const AppointmentDetailsPage = () => {
                   </Link>
                 )}
               </div>
-            </div>
-
-            <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
-              <h2 className="text-lg font-bold text-blue-700">Consultant Notes</h2>
-              <p className="mt-2 text-sm text-slate-500">
-                {isDoctor
-                  ? "Document diagnosis and treatment details for this patient appointment."
-                  : "Review the consultant notes shared by your doctor for this appointment."}
-              </p>
-
-              {consultationLoading && (
-                <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm text-blue-700">Loading consultation note...</div>
-              )}
-
-              {!consultationLoading && isDoctor && canDoctorManageConsultationNote && (
-                <div className="mt-5 space-y-4">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-slate-700">Consultation notes</label>
-                    <textarea
-                      rows={4}
-                      value={consultationForm.notes}
-                      onChange={(e) => setConsultationForm((prev) => ({ ...prev, notes: e.target.value }))}
-                      className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
-                      placeholder="Write key findings and recommendations"
-                    />
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-slate-700">Diagnosis</label>
-                      <input
-                        type="text"
-                        value={consultationForm.diagnosis}
-                        onChange={(e) => setConsultationForm((prev) => ({ ...prev, diagnosis: e.target.value }))}
-                        className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
-                        placeholder="Primary diagnosis"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-slate-700">Treatment plan</label>
-                      <input
-                        type="text"
-                        value={consultationForm.treatmentPlan}
-                        onChange={(e) => setConsultationForm((prev) => ({ ...prev, treatmentPlan: e.target.value }))}
-                        className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
-                        placeholder="Medication, procedures, advice"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl bg-blue-50/50 p-4">
-                    <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-                      <input
-                        type="checkbox"
-                        checked={consultationForm.followUpRequired}
-                        onChange={(e) =>
-                          setConsultationForm((prev) => ({
-                            ...prev,
-                            followUpRequired: e.target.checked,
-                            followUpDate: e.target.checked ? prev.followUpDate : "",
-                            followUpNotes: e.target.checked ? prev.followUpNotes : "",
-                          }))
-                        }
-                      />
-                      Follow-up required
-                    </label>
-
-                    {consultationForm.followUpRequired && (
-                      <div className="mt-3 grid gap-3 md:grid-cols-2">
-                        <input
-                          type="datetime-local"
-                          value={consultationForm.followUpDate}
-                          onChange={(e) => setConsultationForm((prev) => ({ ...prev, followUpDate: e.target.value }))}
-                          className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
-                        />
-                        <input
-                          type="text"
-                          value={consultationForm.followUpNotes}
-                          onChange={(e) => setConsultationForm((prev) => ({ ...prev, followUpNotes: e.target.value }))}
-                          className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
-                          placeholder="Follow-up instructions"
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    disabled={submitting}
-                    onClick={handleConsultationSubmit}
-                    className="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
-                  >
-                    {submitting
-                      ? "Saving..."
-                      : consultationNote?._id
-                        ? "Update Consultant Note"
-                        : "Save Consultant Note"}
-                  </button>
-                </div>
-              )}
-
-              {!consultationLoading && isDoctor && !canDoctorManageConsultationNote && !consultationNote && (
-                <div className="mt-4 rounded-2xl bg-amber-50 p-4 text-sm text-amber-700">
-                  Consultation notes can be added after the appointment is confirmed or completed.
-                </div>
-              )}
-
-              {!consultationLoading && isPatient && !consultationNote && (
-                <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm text-blue-700">
-                  Your doctor has not added consultation notes for this appointment yet.
-                </div>
-              )}
-
-              {!consultationLoading && isPatient && consultationNote && (
-                <div className="mt-5 grid gap-4 md:grid-cols-2">
-                  <InfoCard label="Consultation Notes" value={consultationNote.notes} />
-                  <InfoCard label="Diagnosis" value={consultationNote.diagnosis || "Not specified"} />
-                  <InfoCard label="Treatment Plan" value={consultationNote.treatmentPlan || "Not specified"} />
-                  <InfoCard
-                    label="Follow-up"
-                    value={
-                      consultationNote.followUpRequired
-                        ? `${formatDate(consultationNote.followUpDate)}${consultationNote.followUpNotes ? ` - ${consultationNote.followUpNotes}` : ""}`
-                        : "No follow-up required"
-                    }
-                  />
-                </div>
-              )}
             </div>
 
             {isDoctor && ["pending", "rescheduled", "awaiting_payment"].includes(appointment.status) && appointment.paymentStatus !== "paid" && (
@@ -625,8 +370,8 @@ const AppointmentDetailsPage = () => {
                 )}
 
                 {!sessionLoading && !session && (
-                  <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm text-blue-700">
-                    Session details will appear here after payment confirmation and session setup.
+                  <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm text-slate-600">
+                    The telemedicine session will be available after payment confirmation.
                   </div>
                 )}
               </div>

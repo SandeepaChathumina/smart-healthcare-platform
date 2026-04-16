@@ -77,6 +77,15 @@ services:
       # - mongo
       - auth-service
 
+  ai-feature:
+    build: ../../services/AI-Symptom-Checker
+    ports:
+      - "5020:5020"
+    environment:
+      - PORT=${AI_FEATURE_PORT}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+
+
   frontend:
     build: ../../frontend
     ports:

@@ -104,6 +104,23 @@ export const getPrescriptionById = async (id) => {
   return response.data;
 };
 
+export const getPrescriptionByAppointment = async (appointmentId) => {
+  const response = await axios.get(
+    `${DOCTOR_BASE_URL}/api/doctor/prescriptions/appointment/${appointmentId}`
+  );
+  return response.data;
+};
+
+export const updatePrescription = async (id, payload) => {
+  const response = await axios.put(`${DOCTOR_BASE_URL}/api/doctor/prescriptions/${id}`, payload);
+  return response.data;
+};
+
+export const deletePrescription = async (id) => {
+  const response = await axios.delete(`${DOCTOR_BASE_URL}/api/doctor/prescriptions/${id}`);
+  return response.data;
+};
+
 export const updatePrescriptionStatus = async (id, status) => {
   const response = await axios.patch(`${DOCTOR_BASE_URL}/api/doctor/prescriptions/${id}/status`, { status });
   return response.data;

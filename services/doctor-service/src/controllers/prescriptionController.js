@@ -172,6 +172,105 @@ exports.getPrescriptionById = async (req, res) => {
   }
 };
 
+exports.getPrescriptionByAppointment = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+    const prescription = await Prescription.findOne({ appointmentId });
+
+    if (!prescription) {
+      return res.status(404).json({ message: "Prescription not found" });
+    }
+
+    const userRole = req.user.role;
+    const userId = req.user.id;
+
+    const isAuthorized =
+      userRole === "Admin" ||
+      (userRole === "Doctor" &&
+        String(prescription.doctorId) === String(userId)) ||
+      (userRole === "Patient" &&
+        String(prescription.patientId) === String(userId));
+
+    if (!isAuthorized) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    return res.status(200).json({ success: true, prescription });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.updatePrescription = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { medicines, instructions, diagnosis, validUntil, refillCount, maxRefills, status } =
+      req.body;
+
+    const prescription = await Prescription.findById(id);
+
+    if (!prescription) {
+      return res.status(404).json({ message: "Prescription not found" });
+    }
+
+    if (String(prescription.doctorId) !== String(req.user.id)) {
+      return res
+        .status(403)
+        .json({ message: "You can only update your own prescriptions" });
+    }
+
+    if (medicines !== undefined) {
+      if (!Array.isArray(medicines) || medicines.length === 0) {
+        return res.status(400).json({ message: "medicines must be a non-empty array" });
+      }
+      prescription.medicines = medicines;
+    }
+
+    if (instructions !== undefined) prescription.instructions = instructions || null;
+    if (diagnosis !== undefined) prescription.diagnosis = diagnosis || null;
+    if (validUntil !== undefined) prescription.validUntil = validUntil;
+    if (refillCount !== undefined) prescription.refillCount = refillCount;
+    if (maxRefills !== undefined) prescription.maxRefills = maxRefills;
+    if (status !== undefined) prescription.status = status;
+
+    await prescription.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Prescription updated successfully",
+      prescription,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.deletePrescription = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const prescription = await Prescription.findById(id);
+
+    if (!prescription) {
+      return res.status(404).json({ message: "Prescription not found" });
+    }
+
+    if (String(prescription.doctorId) !== String(req.user.id)) {
+      return res
+        .status(403)
+        .json({ message: "You can only delete your own prescriptions" });
+    }
+
+    await Prescription.deleteOne({ _id: id });
+
+    return res.status(200).json({
+      success: true,
+      message: "Prescription deleted successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 exports.updatePrescriptionStatus = async (req, res) => {
   try {
     const { id } = req.params;

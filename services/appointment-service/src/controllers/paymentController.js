@@ -241,7 +241,6 @@ export const confirmStripePayment = async (req, res) => {
       });
     }
 
-    // If already paid, return existing payment and session
     if (appointment.paymentStatus === "paid") {
       const existingPaidPayment = await Payment.findOne({
         appointmentId: appointment._id,
@@ -271,14 +270,12 @@ export const confirmStripePayment = async (req, res) => {
       });
     }
 
-    // Check only payment_status
     if (stripeSession.payment_status !== "paid") {
       return res.status(400).json({
         message: "Stripe payment is not paid yet",
       });
     }
 
-    // Optional metadata validation
     if (
       stripeSession.metadata?.appointmentId &&
       String(stripeSession.metadata.appointmentId) !== String(appointmentId)
@@ -288,7 +285,6 @@ export const confirmStripePayment = async (req, res) => {
       });
     }
 
-    // Avoid duplicate payment creation if session already used
     let existingPayment = await Payment.findOne({
       transactionId: stripeSession.payment_intent || stripeSession.id,
       status: "paid",

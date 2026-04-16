@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { confirmStripePayment } from "../../services/appointmentService";
@@ -6,6 +6,7 @@ import { confirmStripePayment } from "../../services/appointmentService";
 const PaymentSuccessPage = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
+  const hasVerifiedRef = useRef(false);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -46,7 +47,10 @@ const PaymentSuccessPage = () => {
       }
     };
 
-    if (id) verifyPayment();
+    if (id && !hasVerifiedRef.current) {
+      hasVerifiedRef.current = true;
+      verifyPayment();
+    }
   }, [id, searchParams]);
 
   return (
@@ -55,9 +59,7 @@ const PaymentSuccessPage = () => {
         {loading && (
           <div className="rounded-3xl bg-white p-10 text-center shadow-sm ring-1 ring-blue-100">
             <div className="mx-auto h-14 w-14 animate-spin rounded-full border-4 border-blue-200 border-t-blue-600" />
-            <h2 className="mt-5 text-xl font-bold text-blue-700">
-              Confirming your payment...
-            </h2>
+            <h2 className="mt-5 text-xl font-bold text-blue-700">Confirming your payment...</h2>
             <p className="mt-2 text-sm text-slate-500">
               Please wait while we verify your Stripe checkout result.
             </p>
@@ -94,49 +96,33 @@ const PaymentSuccessPage = () => {
 
             <div className="grid gap-6 lg:grid-cols-3">
               <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
-                <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
-                  Amount Paid
-                </p>
-                <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                  LKR {payment?.amount || 0}
-                </h3>
-                <p className="mt-2 text-sm text-slate-500">
-                  Payment recorded successfully.
-                </p>
+                <p className="text-xs font-medium uppercase tracking-wide text-blue-400">Amount Paid</p>
+                <h3 className="mt-2 text-2xl font-bold text-slate-900">LKR {payment?.amount || 0}</h3>
+                <p className="mt-2 text-sm text-slate-500">Payment recorded successfully.</p>
               </div>
 
               <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
-                <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
-                  Appointment Status
-                </p>
+                <p className="text-xs font-medium uppercase tracking-wide text-blue-400">Appointment Status</p>
                 <h3 className="mt-2 text-2xl font-bold capitalize text-slate-900">
                   {appointment?.status?.replace("_", " ") || "Confirmed"}
                 </h3>
-                <p className="mt-2 text-sm text-slate-500">
-                  Your appointment is now active in the system.
-                </p>
+                <p className="mt-2 text-sm text-slate-500">Your appointment is now active in the system.</p>
               </div>
 
               <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
-                <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
-                  Session Type
-                </p>
+                <p className="text-xs font-medium uppercase tracking-wide text-blue-400">Session Type</p>
                 <h3 className="mt-2 text-2xl font-bold text-slate-900">
-                  {appointment?.appointmentType === "telemedicine"
-                    ? "Telemedicine"
-                    : "In Person"}
+                  {appointment?.appointmentType === "telemedicine" ? "Telemedicine" : "In Person"}
                 </h3>
-                <p className="mt-2 text-sm text-slate-500">
-                  Session access will be available below when applicable.
-                </p>
+                <p className="mt-2 text-sm text-slate-500">Session access will be available below when applicable.</p>
               </div>
             </div>
 
             <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
               <h2 className="text-lg font-bold text-blue-700">Next Step</h2>
               <p className="mt-2 text-sm text-slate-500">
-                You can now review your confirmed appointment details. For telemedicine
-                appointments, open the session page to wait for the doctor to start.
+                You can now review your confirmed appointment details. For telemedicine appointments,
+                open the session page to wait for the doctor to start.
               </p>
 
               <div className="mt-6 flex flex-wrap gap-3">
