@@ -12,10 +12,11 @@ import {
 } from "lucide-react";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { createAppointment } from "../../services/appointmentService";
-import {
-  getAllAvailabilitySlots,
-  getDoctorDetailsById,
-} from "../../services/doctorService";
+import { getAllAvailabilitySlots } from "../../services/doctorService";
+import axios from "../../lib/axios";
+
+const AUTH_BASE_URL =
+  import.meta.env.VITE_AUTH_BASE_URL || "http://localhost:5001";
 
 const WEEKDAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -94,6 +95,11 @@ const buildIntervals = (slot) => {
   return result;
 };
 
+const getDoctorDetailsById = async (doctorId) => {
+  const response = await axios.get(`${AUTH_BASE_URL}/api/patient/doctors/${doctorId}`);
+  return response.data;
+};
+
 const BookAppointmentPage = () => {
   const navigate = useNavigate();
   const [slots, setSlots] = useState([]);
@@ -122,51 +128,48 @@ const BookAppointmentPage = () => {
         const data = await getAllAvailabilitySlots();
         const rawSlots = data?.availability || [];
 
-        const uniqueDoctorIds = [...new Set(rawSlots.map((slot) => slot.doctorId).filter(Boolean))];
+        const uniqueDoctorIds = [...new Set(rawSlots.map((slot) => String(slot.doctorId)).filter(Boolean))];
 
         const doctorResults = await Promise.allSettled(
           uniqueDoctorIds.map(async (doctorId) => {
-            const response = await getDoctorDetailsById(doctorId);
-            return response?.doctor || null;
+            const result = await getDoctorDetailsById(doctorId);
+            return result?.doctor || null;
           })
         );
 
         const doctorMap = new Map();
 
         doctorResults.forEach((result) => {
-          if (result.status === "fulfilled" && result.value?.id) {
-            doctorMap.set(String(result.value.id), result.value);
+          if (result.status === "fulfilled" && result.value?._id) {
+            doctorMap.set(String(result.value._id), result.value);
           }
         });
 
-        const enrichedSlots = rawSlots.map((slot) => {
+        const mergedSlots = rawSlots.map((slot) => {
           const doctorDetails = doctorMap.get(String(slot.doctorId));
 
           return {
             ...slot,
             doctor: {
               ...(slot.doctor || {}),
-              id: slot.doctorId,
+              id: doctorDetails?._id || slot.doctorId,
               fullName:
                 doctorDetails?.fullName ||
                 slot.doctor?.fullName ||
                 "Doctor Name Unavailable",
               specialization:
                 doctorDetails?.specialization ||
-                slot.doctor?.specialization ||
                 "Specialization Unavailable",
-              email: doctorDetails?.email || slot.doctor?.email || null,
-              phone: doctorDetails?.phone || slot.doctor?.phone || null,
-              profileImage: doctorDetails?.profileImage || null,
-              consultationFee:
-                doctorDetails?.consultationFee ??
-                slot.doctor?.consultationFee ??
-                null,
+              email: doctorDetails?.email || null,
+              phone: doctorDetails?.phone || null,
+              qualifications: doctorDetails?.qualifications || null,
+              experience: doctorDetails?.experience ?? null,
+              consultationFee: doctorDetails?.consultationFee ?? null,
             },
           };
         });
 
-        setSlots(enrichedSlots);
+        setSlots(mergedSlots);
       } catch (err) {
         setError(err?.response?.data?.message || "Failed to load doctor availability");
       } finally {
@@ -247,7 +250,6 @@ const BookAppointmentPage = () => {
 
     try {
       setSaving(true);
-
       const payload = {
         doctorId: selectedSlot.doctorId,
         availabilityId: selectedSlot._id,
