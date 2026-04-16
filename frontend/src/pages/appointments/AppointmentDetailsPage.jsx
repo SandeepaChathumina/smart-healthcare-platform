@@ -24,7 +24,14 @@ const formatDateTime = (value) => {
   if (!value) return "Not scheduled yet";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString();
+  return date.toLocaleString("en-GB", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
 };
 
 const toDateTimeLocal = (value) => {
@@ -199,6 +206,8 @@ const AppointmentDetailsPage = () => {
         {appointment && !loading && !error && (
           <>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <InfoCard label="Patient" value={appointment.patientName || "Patient"} />
+              <InfoCard label="Doctor" value={appointment.doctorName || "Doctor"} />
               <InfoCard label="Appointment Type" value={formatType(appointment.appointmentType)} />
               <InfoCard label="Preferred Date & Time" value={formatDateTime(appointment.preferredDateTime)} />
               <InfoCard label="Scheduled Date & Time" value={formatDateTime(appointment.scheduledDateTime)} />
@@ -361,8 +370,8 @@ const AppointmentDetailsPage = () => {
                 )}
 
                 {!sessionLoading && !session && (
-                  <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm text-blue-700">
-                    Session details will appear here after payment confirmation and session setup.
+                  <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm text-slate-600">
+                    The telemedicine session will be available after payment confirmation.
                   </div>
                 )}
               </div>

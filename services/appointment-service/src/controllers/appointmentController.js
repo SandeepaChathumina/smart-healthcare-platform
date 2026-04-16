@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import axios from "axios";
 import Appointment from "../models/Appointment.js";
 import {
   decrementAvailabilityBookedCount,
@@ -17,6 +18,13 @@ const normalizeAppointmentType = (value) => {
 };
 
 const parseDateOnly = (dateValue) => {
+  if (!dateValue) return null;
+
+  if (typeof dateValue === "string" && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+    const [year, month, day] = dateValue.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+
   const date = new Date(dateValue);
   if (Number.isNaN(date.getTime())) return null;
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -40,9 +48,7 @@ const minutesFromTime = (timeValue) => {
 
 const addMinutes = (date, minutes) => new Date(date.getTime() + minutes * 60 * 1000);
 
-const getAppointmentStart = (appointment) => {
-  return appointment.scheduledDateTime || appointment.preferredDateTime;
-};
+const getAppointmentStart = (appointment) => appointment.scheduledDateTime || appointment.preferredDateTime;
 
 const rangesOverlap = (startA, endA, startB, endB) => startA < endB && startB < endA;
 
@@ -150,7 +156,7 @@ const fetchAndValidateSlot = async ({ doctorId, availabilityId, appointmentDate,
 
   const data = await getAvailableSlotsByDoctor(
     doctorId,
-    date.toISOString().split("T")[0],
+    [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-"),
     appointmentType,
     token
   );
@@ -167,6 +173,59 @@ const fetchAndValidateSlot = async ({ doctorId, availabilityId, appointmentDate,
   }
 
   return selectedSlot;
+};
+
+const getUserDirectory = async (userIds = []) => {
+  const uniqueIds = [...new Set(userIds.filter(Boolean).map((id) => String(id)))];
+
+  if (!uniqueIds.length || !process.env.AUTH_SERVICE_URL || !process.env.INTERNAL_SERVICE_API_KEY) {
+    return {};
+  }
+
+  try {
+    const response = await axios.post(
+      `${process.env.AUTH_SERVICE_URL}/api/auth/internal/users/contacts`,
+      { userIds: uniqueIds },
+      {
+        headers: {
+          "x-internal-api-key": process.env.INTERNAL_SERVICE_API_KEY,
+        },
+        timeout: 5000,
+      }
+    );
+
+    const contacts = response.data?.contacts || [];
+
+    return contacts.reduce((map, contact) => {
+      map[String(contact.id)] = contact;
+      return map;
+    }, {});
+  } catch (error) {
+    console.error("Failed to fetch user contacts:", error.response?.data || error.message);
+    return {};
+  }
+};
+
+const enrichAppointment = (appointment, userDirectory) => {
+  const item = appointment.toObject ? appointment.toObject() : { ...appointment };
+  const patient = userDirectory[String(item.patientId)] || null;
+  const doctor = userDirectory[String(item.doctorId)] || null;
+
+  return {
+    ...item,
+    patientName: patient?.fullName || "Patient",
+    patientEmail: patient?.email || "",
+    doctorName: doctor?.fullName || "Doctor",
+    doctorEmail: doctor?.email || "",
+  };
+};
+
+const enrichAppointments = async (appointments) => {
+  const userDirectory = await getUserDirectory(
+    appointments.flatMap((appointment) => [appointment.patientId, appointment.doctorId])
+  );
+
+  return appointments.map((appointment) => enrichAppointment(appointment, userDirectory));
 };
 
 export const createAppointment = async (req, res) => {
@@ -294,9 +353,11 @@ export const createAppointment = async (req, res) => {
       await incrementAvailabilityBookedCount(availabilityId, authToken);
     }
 
+    const [enrichedAppointment] = await enrichAppointments([appointment]);
+
     return res.status(201).json({
       message: "Appointment created successfully",
-      appointment,
+      appointment: enrichedAppointment,
     });
   } catch (error) {
     return res.status(500).json({
@@ -309,11 +370,12 @@ export const createAppointment = async (req, res) => {
 export const getAllAppointments = async (req, res) => {
   try {
     const appointments = await Appointment.find().sort({ createdAt: -1 });
+    const enrichedAppointments = await enrichAppointments(appointments);
 
     return res.status(200).json({
       success: true,
-      count: appointments.length,
-      appointments,
+      count: enrichedAppointments.length,
+      appointments: enrichedAppointments,
     });
   } catch (error) {
     return res.status(500).json({
@@ -337,11 +399,12 @@ export const getAppointmentsByPatient = async (req, res) => {
     }
 
     const appointments = await Appointment.find({ patientId }).sort({ createdAt: -1 });
+    const enrichedAppointments = await enrichAppointments(appointments);
 
     return res.status(200).json({
       success: true,
-      count: appointments.length,
-      appointments,
+      count: enrichedAppointments.length,
+      appointments: enrichedAppointments,
     });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
@@ -362,11 +425,12 @@ export const getAppointmentsByDoctor = async (req, res) => {
     }
 
     const appointments = await Appointment.find({ doctorId }).sort({ createdAt: -1 });
+    const enrichedAppointments = await enrichAppointments(appointments);
 
     return res.status(200).json({
       success: true,
-      count: appointments.length,
-      appointments,
+      count: enrichedAppointments.length,
+      appointments: enrichedAppointments,
     });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
@@ -397,7 +461,9 @@ export const getAppointmentById = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    return res.status(200).json({ success: true, appointment });
+    const [enrichedAppointment] = await enrichAppointments([appointment]);
+
+    return res.status(200).json({ success: true, appointment: enrichedAppointment });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -544,10 +610,11 @@ export const updateAppointmentStatus = async (req, res) => {
     }
 
     await appointment.save();
+    const [enrichedAppointment] = await enrichAppointments([appointment]);
 
     return res.status(200).json({
       message: "Appointment status updated successfully",
-      appointment,
+      appointment: enrichedAppointment,
     });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
@@ -591,9 +658,11 @@ export const cancelAppointment = async (req, res) => {
       await decrementAvailabilityBookedCount(appointment.availabilityId, authToken);
     }
 
+    const [enrichedAppointment] = await enrichAppointments([appointment]);
+
     return res.status(200).json({
       message: "Appointment cancelled successfully",
-      appointment,
+      appointment: enrichedAppointment,
     });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
