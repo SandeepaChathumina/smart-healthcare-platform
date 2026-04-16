@@ -1,12 +1,2 @@
-appointment.env
-
-auth.env
-
-doctor.env
-
-frontend.env
-
-notification.env
-
-patient.env
-
+.env
+*.env

@@ -1,32 +1,44 @@
-// frontend/src/pages/dashboard/DoctorDashboardPage.jsx
-
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Calendar, 
-  Users, 
-  Clock, 
-  CheckCircle, 
+import {
+  Calendar,
+  Clock,
+  CheckCircle,
   Activity,
   Video,
   FileText,
   Pill,
   DollarSign,
   Bell,
-  TrendingUp
 } from 'lucide-react';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import useAuth from '../../hooks/useAuth';
 import { APP_ROUTES } from '../../constants/routes';
 import { getAppointmentsByDoctor } from '../../services/appointmentService';
 
+const formatLkr = (value) => `LKR ${Number(value || 0).toLocaleString('en-LK')}`;
+
+const formatDateTime = (value) => {
+  if (!value) return 'Not scheduled yet';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+};
+
 const StatCard = ({ title, value, icon: Icon, color, trend, onClick }) => {
   return (
-    <div 
+    <div
       onClick={onClick}
       className="group cursor-pointer rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
     >
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-slate-500">{title}</p>
           <h3 className="mt-2 text-3xl font-bold text-slate-900">{value}</h3>
@@ -59,7 +71,7 @@ const QuickActionCard = ({ title, description, icon: Icon, link, color }) => {
   );
 };
 
-const AppointmentCard = ({ appointment, onAccept, onReject }) => {
+const AppointmentCard = ({ appointment }) => {
   const statusColors = {
     pending: 'bg-amber-100 text-amber-700',
     accepted: 'bg-blue-100 text-blue-700',
@@ -68,15 +80,6 @@ const AppointmentCard = ({ appointment, onAccept, onReject }) => {
     completed: 'bg-emerald-100 text-emerald-700',
     cancelled: 'bg-red-100 text-red-700',
     rejected: 'bg-gray-100 text-gray-700',
-  };
-
-  const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
   };
 
   return (
@@ -91,50 +94,23 @@ const AppointmentCard = ({ appointment, onAccept, onReject }) => {
               {appointment.appointmentType === 'telemedicine' ? '🖥️ Telemedicine' : '🏥 In Person'}
             </span>
           </div>
-          
-          <p className="mt-2 font-medium text-slate-900">Patient ID: {appointment.patientId}</p>
+
+          <p className="mt-2 font-medium text-slate-900">Patient: {appointment.patientName || 'Patient'}</p>
           <p className="text-sm text-slate-600">{appointment.reason}</p>
-          
+
           <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              {formatDate(appointment.preferredDateTime)}
+              {formatDateTime(appointment.scheduledDateTime || appointment.preferredDateTime)}
             </span>
             <span className="flex items-center gap-1">
               <DollarSign className="h-3 w-3" />
-              ${appointment.consultationFee}
+              {formatLkr(appointment.consultationFee)}
             </span>
           </div>
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {(appointment.status === 'pending' || appointment.status === 'rescheduled') && (
-            <>
-              <button
-                onClick={() => onAccept(appointment._id)}
-                className="rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-green-700"
-              >
-                Accept
-              </button>
-              <button
-                onClick={() => onReject(appointment._id)}
-                className="rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-red-700"
-              >
-                Reject
-              </button>
-            </>
-          )}
-          
-          {appointment.status === 'confirmed' && appointment.appointmentType === 'telemedicine' && (
-            <button
-              onClick={() => window.open(`/patient/telemedicine/${appointment.telemedicineSessionId}`, '_blank')}
-              className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-blue-700"
-            >
-              <Video className="mr-1 inline h-3 w-3" />
-              Start Call
-            </button>
-          )}
-          
           <Link
             to={`/doctor/appointments/${appointment._id}`}
             className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
@@ -147,9 +123,9 @@ const AppointmentCard = ({ appointment, onAccept, onReject }) => {
   );
 };
 
-const UpcomingAppointmentsWidget = ({ appointments, onAccept, onReject }) => {
+const UpcomingAppointmentsWidget = ({ appointments }) => {
   const upcoming = appointments
-    .filter(a => ['pending', 'accepted', 'confirmed'].includes(a.status))
+    .filter((a) => ['pending', 'accepted', 'awaiting_payment', 'confirmed'].includes(a.status))
     .slice(0, 3);
 
   if (upcoming.length === 0) {
@@ -166,27 +142,15 @@ const UpcomingAppointmentsWidget = ({ appointments, onAccept, onReject }) => {
       {upcoming.map((appointment) => (
         <div key={appointment._id} className="flex items-center justify-between rounded-lg bg-slate-50 p-3">
           <div>
-            <p className="text-sm font-medium text-slate-900">Patient: {appointment.patientId}</p>
-            <p className="text-xs text-slate-500">
-              {new Date(appointment.preferredDateTime).toLocaleDateString()}
-            </p>
+            <p className="text-sm font-medium text-slate-900">Patient: {appointment.patientName || 'Patient'}</p>
+            <p className="text-xs text-slate-500">{formatDateTime(appointment.scheduledDateTime || appointment.preferredDateTime)}</p>
           </div>
-          <div className="flex gap-2">
-            {appointment.status === 'pending' && (
-              <button
-                onClick={() => onAccept(appointment._id)}
-                className="rounded-lg bg-green-600 px-2 py-1 text-xs text-white"
-              >
-                Accept
-              </button>
-            )}
-            <Link
-              to={`/doctor/appointments/${appointment._id}`}
-              className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
-            >
-              View
-            </Link>
-          </div>
+          <Link
+            to={`/doctor/appointments/${appointment._id}`}
+            className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
+          >
+            View
+          </Link>
         </div>
       ))}
     </div>
@@ -212,17 +176,16 @@ const DoctorDashboardPage = () => {
       const data = await getAppointmentsByDoctor(user?.id);
       const apps = data?.appointments || [];
       setAppointments(apps);
-      
-      // Calculate stats
-      const pending = apps.filter(a => a.status === 'pending' || a.status === 'rescheduled').length;
-      const confirmed = apps.filter(a => a.status === 'confirmed').length;
-      const completed = apps.filter(a => a.status === 'completed').length;
-      const cancelled = apps.filter(a => a.status === 'cancelled').length;
-      
+
+      const pending = apps.filter((a) => a.status === 'pending' || a.status === 'rescheduled' || a.status === 'awaiting_payment').length;
+      const confirmed = apps.filter((a) => a.status === 'confirmed').length;
+      const completed = apps.filter((a) => a.status === 'completed').length;
+      const cancelled = apps.filter((a) => a.status === 'cancelled').length;
+
       const earnings = apps
-        .filter(a => a.status === 'completed' || a.status === 'confirmed')
-        .reduce((sum, a) => sum + (a.consultationFee || 0), 0);
-      
+        .filter((a) => a.paymentStatus === 'paid')
+        .reduce((sum, a) => sum + Number(a.consultationFee || 0), 0);
+
       setStats({
         totalAppointments: apps.length,
         pendingAppointments: pending,
@@ -244,19 +207,9 @@ const DoctorDashboardPage = () => {
     }
   }, [user?.id]);
 
-  const handleAccept = async (appointmentId) => {
-    console.log('Accept appointment:', appointmentId);
-    // Implement accept logic here
-  };
-
-  const handleReject = async (appointmentId) => {
-    console.log('Reject appointment:', appointmentId);
-    // Implement reject logic here
-  };
-
   const quickActions = [
     {
-      title: 'Today\'s Schedule',
+      title: "Today's Schedule",
       description: 'View and manage your appointments for today',
       icon: Calendar,
       link: APP_ROUTES.DOCTOR_APPOINTMENTS,
@@ -278,197 +231,155 @@ const DoctorDashboardPage = () => {
     },
     {
       title: 'Manage Availability',
-      description: 'Set your working hours and availability slots',
+      description: 'Update available days and consultation hours',
       icon: Clock,
-      link: '/doctor/availability',
+      link: APP_ROUTES.DOCTOR_AVAILABILITY,
       color: 'bg-amber-100 text-amber-600',
     },
     {
-      title: 'Patient List',
-      description: 'View and manage your patient records',
-      icon: Users,
-      link: '/doctor/patients',
-      color: 'bg-cyan-100 text-cyan-600',
+      title: 'Telemedicine Sessions',
+      description: 'Join and manage video consultations',
+      icon: Video,
+      link: APP_ROUTES.DOCTOR_APPOINTMENTS,
+      color: 'bg-purple-100 text-purple-600',
     },
     {
-      title: 'Telemedicine',
-      description: 'Start video consultations with patients',
-      icon: Video,
-      link: '/doctor/telemedicine',
-      color: 'bg-indigo-100 text-indigo-600',
+      title: 'Consultation Notes',
+      description: 'Add notes and prescriptions after appointments',
+      icon: FileText,
+      link: APP_ROUTES.DOCTOR_APPOINTMENTS,
+      color: 'bg-emerald-100 text-emerald-600',
     },
   ];
 
-  const pendingRequests = appointments.filter(a => a.status === 'pending' || a.status === 'rescheduled');
+  const todaysStats = useMemo(() => {
+    const today = new Date();
+    return appointments.reduce(
+      (acc, appointment) => {
+        const date = new Date(appointment.scheduledDateTime || appointment.preferredDateTime);
+        if (
+          date.getFullYear() === today.getFullYear() &&
+          date.getMonth() === today.getMonth() &&
+          date.getDate() === today.getDate()
+        ) {
+          acc.total += 1;
+          if (appointment.status === 'completed') acc.completed += 1;
+          if (appointment.status === 'pending' || appointment.status === 'awaiting_payment') acc.pending += 1;
+        }
+        return acc;
+      },
+      { total: 0, completed: 0, pending: 0 }
+    );
+  }, [appointments]);
 
   return (
     <DashboardLayout title="Doctor Dashboard">
-      {/* Welcome Section */}
-      <div className="mb-8 rounded-3xl bg-gradient-to-r from-blue-600 to-blue-800 p-8 text-white">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <h2 className="text-2xl font-bold">Welcome back, Dr. {user?.fullName?.split(' ').pop() || user?.fullName}!</h2>
-            <p className="mt-2 text-blue-100">
-              Manage your appointments, write prescriptions, and provide care to your patients.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 rounded-xl bg-white/20 px-4 py-2 backdrop-blur">
-            <Bell className="h-4 w-4" />
-            <span className="text-sm font-medium">{pendingRequests.length} pending requests</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Section */}
-      <div className="mb-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        <StatCard
-          title="Total Appointments"
-          value={loading ? '...' : stats.totalAppointments}
-          icon={Calendar}
-          color="bg-blue-100 text-blue-600"
-          trend={5}
-        />
-        <StatCard
-          title="Pending Requests"
-          value={loading ? '...' : stats.pendingAppointments}
-          icon={Clock}
-          color="bg-amber-100 text-amber-600"
-        />
-        <StatCard
-          title="Confirmed"
-          value={loading ? '...' : stats.confirmedAppointments}
-          icon={CheckCircle}
-          color="bg-green-100 text-green-600"
-        />
-        <StatCard
-          title="Completed"
-          value={loading ? '...' : stats.completedAppointments}
-          icon={Activity}
-          color="bg-emerald-100 text-emerald-600"
-        />
-        <StatCard
-          title="Total Earnings"
-          value={loading ? '...' : `$${stats.totalEarnings}`}
-          icon={DollarSign}
-          color="bg-purple-100 text-purple-600"
-          trend={12}
-        />
-      </div>
-
-      {/* Main Grid Section - THIS IS THE FIXED PART */}
-      <div className="grid gap-8 lg:grid-cols-3">
-        {/* Quick Actions - 2/3 width on desktop */}
-        <div className="lg:col-span-2">
-          <h3 className="mb-4 text-xl font-bold text-slate-900">Quick Actions</h3>
-          <div className="grid gap-6 sm:grid-cols-2">
-            {quickActions.map((action) => (
-              <QuickActionCard key={action.title} {...action} />
-            ))}
-          </div>
-        </div>
-
-        {/* Upcoming Appointments Widget */}
-        <div>
-          <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-xl font-bold text-slate-900">Upcoming</h3>
-            <Link to={APP_ROUTES.DOCTOR_APPOINTMENTS} className="text-sm text-blue-600 hover:underline">
-              View all
-            </Link>
-          </div>
-          <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-            <UpcomingAppointmentsWidget 
-              appointments={appointments} 
-              onAccept={handleAccept}
-              onReject={handleReject}
-            />
-          </div>
-
-          {/* Today's Schedule Summary */}
-          <div className="mt-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-            <h4 className="mb-3 font-semibold text-slate-900">Today's Schedule</h4>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-600">Total appointments</span>
-                <span className="font-medium text-slate-900">
-                  {appointments.filter(a => {
-                    const today = new Date().toDateString();
-                    return new Date(a.preferredDateTime).toDateString() === today;
-                  }).length}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-600">Completed</span>
-                <span className="font-medium text-green-600">
-                  {appointments.filter(a => {
-                    const today = new Date().toDateString();
-                    return new Date(a.preferredDateTime).toDateString() === today && a.status === 'completed';
-                  }).length}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-600">Pending</span>
-                <span className="font-medium text-amber-600">
-                  {appointments.filter(a => {
-                    const today = new Date().toDateString();
-                    return new Date(a.preferredDateTime).toDateString() === today && a.status === 'pending';
-                  }).length}
-                </span>
+      <div className="space-y-8">
+        <div className="rounded-3xl bg-gradient-to-r from-blue-600 to-blue-700 p-8 text-white shadow-lg">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h1 className="text-4xl font-bold">Welcome back, Dr. {user?.fullName?.split(' ').slice(-1)[0] || 'Doctor'}!</h1>
+              <p className="mt-3 text-lg text-blue-100">
+                Manage your appointments, write prescriptions, and provide care to your patients.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-white/20 px-6 py-4 backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                <Bell className="h-6 w-6" />
+                <div>
+                  <p className="font-semibold">{stats.pendingAppointments} pending requests</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div> 
 
-      {/* Recent Appointments Section */}
-      <div className="mt-8">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-xl font-bold text-slate-900">Recent Appointments</h3>
-          <Link to={APP_ROUTES.DOCTOR_APPOINTMENTS} className="text-sm text-blue-600 hover:underline">
-            View all appointments →
-          </Link>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <StatCard title="Total Appointments" value={stats.totalAppointments} icon={Calendar} color="bg-blue-100 text-blue-600" trend={5} onClick={() => {}} />
+          <StatCard title="Pending Requests" value={stats.pendingAppointments} icon={Clock} color="bg-amber-100 text-amber-600" onClick={() => {}} />
+          <StatCard title="Confirmed" value={stats.confirmedAppointments} icon={CheckCircle} color="bg-green-100 text-green-600" onClick={() => {}} />
+          <StatCard title="Completed" value={stats.completedAppointments} icon={Activity} color="bg-emerald-100 text-emerald-600" onClick={() => {}} />
+          <StatCard title="Total Earnings" value={formatLkr(stats.totalEarnings)} icon={DollarSign} color="bg-purple-100 text-purple-600" trend={12} onClick={() => {}} />
         </div>
 
-        {loading ? (
-          <div className="rounded-2xl bg-slate-100 p-8 text-center">
-            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
-            <p className="mt-3 text-slate-600">Loading appointments...</p>
-          </div>
-        ) : appointments.length === 0 ? (
-          <div className="rounded-2xl bg-slate-100 p-12 text-center">
-            <Calendar className="mx-auto h-12 w-12 text-slate-400" />
-            <h3 className="mt-3 text-lg font-semibold text-slate-900">No appointments yet</h3>
-            <p className="mt-1 text-sm text-slate-600">
-              When patients book appointments, they will appear here
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {appointments.slice(0, 5).map((appointment) => (
-              <AppointmentCard
-                key={appointment._id}
-                appointment={appointment}
-                onAccept={handleAccept}
-                onReject={handleReject}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Tips Section */}
-      <div className="mt-8 rounded-2xl bg-gradient-to-r from-slate-50 to-slate-100 p-6">
-        <div className="flex items-start gap-4">
-          <div className="rounded-xl bg-blue-100 p-3">
-            <TrendingUp className="h-5 w-5 text-blue-600" />
-          </div>
+        <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
           <div>
-            <h4 className="font-semibold text-slate-900">Pro Tips for Better Practice</h4>
-            <p className="mt-1 text-sm text-slate-600">
-              • Keep your availability updated to help patients book appointments easily<br />
-              • Write detailed consultation notes for better patient records<br />
-              • Use telemedicine for follow-up consultations when appropriate<br />
-              • Respond to appointment requests promptly to improve patient satisfaction
-            </p>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-slate-900">Recent Appointments</h2>
+              <Link to={APP_ROUTES.DOCTOR_APPOINTMENTS} className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+                View all appointments →
+              </Link>
+            </div>
+
+            {loading ? (
+              <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">Loading appointments...</div>
+            ) : appointments.length === 0 ? (
+              <div className="rounded-2xl bg-white p-6 text-slate-500 shadow-sm ring-1 ring-slate-200">No appointments yet.</div>
+            ) : (
+              <div className="space-y-4">
+                {appointments.slice(0, 5).map((appointment) => (
+                  <AppointmentCard key={appointment._id} appointment={appointment} />
+                ))}
+              </div>
+            )}
+
+            <div className="mt-8 rounded-3xl bg-blue-50 p-8 ring-1 ring-blue-100">
+              <div className="flex items-start gap-4">
+                <div className="rounded-2xl bg-blue-100 p-4">
+                  <Pill className="h-8 w-8 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-2xl font-bold text-slate-900">Pro Tips for Better Practice</h3>
+                  <ul className="mt-4 space-y-2 text-slate-600">
+                    <li>• Keep your availability updated to help patients book appointments easily</li>
+                    <li>• Write detailed consultation notes for better patient records</li>
+                    <li>• Use telemedicine for follow-up consultations when appropriate</li>
+                    <li>• Respond to appointment requests promptly to improve patient satisfaction</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-8">
+            <div>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-slate-900">Quick Actions</h2>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                {quickActions.map((action) => (
+                  <QuickActionCard key={action.title} {...action} />
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-2xl font-bold text-slate-900">Upcoming</h3>
+                <Link to={APP_ROUTES.DOCTOR_APPOINTMENTS} className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+                  View all
+                </Link>
+              </div>
+              <UpcomingAppointmentsWidget appointments={appointments} />
+            </div>
+
+            <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+              <h3 className="text-2xl font-bold text-slate-900">Today's Schedule</h3>
+              <div className="mt-6 space-y-4 text-slate-700">
+                <div className="flex items-center justify-between">
+                  <span>Total appointments</span>
+                  <span className="text-xl font-bold text-slate-900">{todaysStats.total}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Completed</span>
+                  <span className="text-xl font-bold text-green-600">{todaysStats.completed}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Pending</span>
+                  <span className="text-xl font-bold text-amber-600">{todaysStats.pending}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
