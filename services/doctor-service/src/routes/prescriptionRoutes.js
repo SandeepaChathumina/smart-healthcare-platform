@@ -6,14 +6,16 @@ const {
   getPrescriptionsByPatient,
   getPrescriptionById,
   updatePrescriptionStatus,
+  getPatientPrescriptionsSummary,
 } = require("../controllers/prescriptionController");
 
 const router = express.Router();
 
 router.post("/", protect, authorizeRoles("Doctor"), createPrescription);
-router.get("/doctor/:doctorId", protect, authorizeRoles("Doctor", "Admin"), getPrescriptionsByDoctor);
-router.get("/patient/:patientId", protect, authorizeRoles("Patient", "Doctor", "Admin"), getPrescriptionsByPatient);
-router.get("/:id", protect, authorizeRoles("Patient", "Doctor", "Admin"), getPrescriptionById);
+router.get("/doctor/:doctorId", protect, getPrescriptionsByDoctor);
+router.get("/patient/:patientId", protect, getPrescriptionsByPatient);
+router.get("/patient/:patientId/summary", protect, getPatientPrescriptionsSummary);
+router.get("/:id", protect, getPrescriptionById);
 router.patch("/:id/status", protect, authorizeRoles("Doctor"), updatePrescriptionStatus);
 
 module.exports = router;

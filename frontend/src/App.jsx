@@ -35,6 +35,11 @@ import ViewReportsPage from "./pages/patient/ViewReportsPage";
 import MedicalHistoryPage from "./pages/patient/MedicalHistoryPage";
 import PrescriptionsPage from "./pages/patient/PrescriptionsPage";
 
+// it23831254/doctor-availability pages
+import AvailabilityPage from './pages/doctor/availability/AvailabilityPage';
+import AddAvailabilityPage from './pages/doctor/availability/AddAvailabilityPage';
+import ViewAvailabilityPage from './pages/doctor/availability/ViewAvailabilityPage';
+
 function App() {
   return (
     <Routes>
@@ -160,6 +165,15 @@ function App() {
               element={<RoleProtectedRoute allowedRoles={["Doctor"]} />}
             >
               <Route index element={<AppointmentDetailsPage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.DOCTOR_AVAILABILITY}
+              element={<RoleProtectedRoute allowedRoles={["Doctor"]} />}
+            >
+              <Route index element={<AvailabilityPage />} />
+              <Route path="new" element={<AddAvailabilityPage />} />
+              <Route path=":id" element={<ViewAvailabilityPage />} />
             </Route>
 
             {/* Patient Routes */}

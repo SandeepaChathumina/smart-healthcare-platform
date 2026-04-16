@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import Appointment from "../models/Appointment.js";
+import { incrementAvailabilityBookedCount, decrementAvailabilityBookedCount } from "../utils/doctorServiceCaller.js";
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -15,9 +16,11 @@ export const createAppointment = async (req, res) => {
       consultationFee,
       patientNotes,
       uploadedReportIds,
+      availabilityId, // New field for syncing with availability slots
     } = req.body;
 
     const patientId = req.user?.id || req.user?._id || req.user?.userId;
+    const authToken = req.headers.authorization?.split(" ")[1];
 
     if (req.user.role !== "Patient") {
       return res
@@ -45,6 +48,12 @@ export const createAppointment = async (req, res) => {
       });
     }
 
+    if (availabilityId && !isValidObjectId(availabilityId)) {
+      return res.status(400).json({
+        message: "Invalid availabilityId",
+      });
+    }
+
     if (
       uploadedReportIds &&
       (!Array.isArray(uploadedReportIds) ||
@@ -65,9 +74,20 @@ export const createAppointment = async (req, res) => {
       consultationFee,
       patientNotes,
       uploadedReportIds: uploadedReportIds || [],
+      availabilityId: availabilityId || null,
       status: "pending",
       paymentStatus: "unpaid",
     });
+
+    // Sync with doctor-service if availabilityId is provided
+    if (availabilityId && authToken) {
+      try {
+        await incrementAvailabilityBookedCount(availabilityId, authToken);
+      } catch (error) {
+        console.error("Warning: Failed to update availability booking count:", error.message);
+        // Continue - appointment was already created successfully
+      }
+    }
 
     return res.status(201).json({
       message: "Appointment created successfully",
@@ -391,6 +411,17 @@ export const cancelAppointment = async (req, res) => {
       cancellationReason || "Appointment cancelled by user";
 
     await appointment.save();
+
+    // Sync with doctor-service to decrement bookedCount
+    const authToken = req.headers.authorization?.split(" ")[1];
+    if (appointment.availabilityId && authToken) {
+      try {
+        await decrementAvailabilityBookedCount(appointment.availabilityId, authToken);
+      } catch (error) {
+        console.error("Warning: Failed to update availability booking count:", error.message);
+        // Continue - cancellation was already successful
+      }
+    }
 
     return res.status(200).json({
       message: "Appointment cancelled successfully",

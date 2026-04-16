@@ -2,6 +2,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",
     "aos": "^2.3.4",
+    "sweetalert2": "^11.26.24",
     "tailwindcss": "^4.2.2"
   }
 }

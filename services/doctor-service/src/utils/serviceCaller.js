@@ -20,7 +20,9 @@ const validateAppointment = async (appointmentId, doctorId, token) => {
 
     const validStatuses = ["confirmed", "completed"];
     if (!validStatuses.includes(appointment.status)) {
-      throw new Error(`Cannot add consultation note. Appointment status is ${appointment.status}`);
+      throw new Error(
+        `Cannot add consultation note. Appointment status is ${appointment.status}`
+      );
     }
 
     return appointment;
@@ -32,11 +34,11 @@ const validateAppointment = async (appointmentId, doctorId, token) => {
   }
 };
 
-const updateAppointmentStatus = async (appointmentId, status, token) => {
+const updateAppointmentStatus = async (appointmentId, status, token, additionalData = {}) => {
   try {
     const response = await axios.patch(
       `${process.env.APPOINTMENT_SERVICE_URL}/api/appointments/${appointmentId}/status`,
-      { status },
+      { status, ...additionalData },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -54,7 +56,7 @@ const updateAppointmentStatus = async (appointmentId, status, token) => {
 const sendNotification = async (receiverIds, eventType, metadata, token) => {
   try {
     const receivers = Array.isArray(receiverIds) ? receiverIds : [receiverIds];
-    
+
     const response = await axios.post(
       `${process.env.NOTIFICATION_SERVICE_URL}/api/notifications/send`,
       {
@@ -76,8 +78,28 @@ const sendNotification = async (receiverIds, eventType, metadata, token) => {
   }
 };
 
+const getUserContacts = async (userId, token) => {
+  try {
+    const response = await axios.post(
+      `${process.env.AUTH_SERVICE_URL}/api/auth/internal/users/contacts`,
+      { userIds: [userId] },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-internal-api-key": process.env.INTERNAL_SERVICE_API_KEY,
+        },
+      }
+    );
+    return response.data.contacts[0] || null;
+  } catch (error) {
+    console.error("Failed to get user contacts:", error.message);
+    return null;
+  }
+};
+
 module.exports = {
   validateAppointment,
   updateAppointmentStatus,
   sendNotification,
+  getUserContacts,
 };

@@ -34,7 +34,7 @@ const authorizeRoles = (...roles) => {
           message: `Access denied. Required role: ${roles.join(" or ")}`,
         });
     }
-    next();
+    return next();
   };
 };
 

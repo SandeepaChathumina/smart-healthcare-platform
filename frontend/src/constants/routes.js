@@ -45,4 +45,9 @@ export const APP_ROUTES = {
 
   DOCTOR_APPOINTMENTS: "/doctor/appointments",
   DOCTOR_APPOINTMENT_DETAILS: "/doctor/appointments/:id",
+
+  // Doctor Availability Routes
+  DOCTOR_AVAILABILITY: "/doctor/availability",
+  DOCTOR_AVAILABILITY_NEW: "/doctor/availability/new",
+  DOCTOR_AVAILABILITY_VIEW: "/doctor/availability/:id",
 };

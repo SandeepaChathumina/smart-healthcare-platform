@@ -24,27 +24,34 @@ const medicineSchema = new mongoose.Schema({
   quantity: {
     type: Number,
     min: 0,
+    default: null,
   },
   notes: {
     type: String,
     trim: true,
+    default: null,
+  },
+  timing: {
+    type: String,
+    enum: ["before_meal", "after_meal", "with_meal", "anytime"],
+    default: "anytime",
   },
 });
 
 const prescriptionSchema = new mongoose.Schema(
   {
     appointmentId: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
       required: [true, "Appointment ID is required"],
       index: true,
     },
     doctorId: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
       required: [true, "Doctor ID is required"],
       index: true,
     },
     patientId: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
       required: [true, "Patient ID is required"],
       index: true,
     },
@@ -58,6 +65,11 @@ const prescriptionSchema = new mongoose.Schema(
     },
     medicines: [medicineSchema],
     instructions: {
+      type: String,
+      trim: true,
+      maxlength: [1000, "Instructions cannot exceed 1000 characters"],
+    },
+    diagnosis: {
       type: String,
       trim: true,
     },
@@ -74,6 +86,14 @@ const prescriptionSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    refillCount: {
+      type: Number,
+      default: 0,
+    },
+    maxRefills: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,
@@ -81,5 +101,7 @@ const prescriptionSchema = new mongoose.Schema(
 );
 
 prescriptionSchema.index({ patientId: 1, issuedDate: -1 });
+prescriptionSchema.index({ doctorId: 1, issuedDate: -1 });
+prescriptionSchema.index({ status: 1 });
 
 module.exports = mongoose.model("Prescription", prescriptionSchema);
