@@ -39,8 +39,9 @@ const badgeClass = (value) => {
   if (status === "awaiting_payment") return "bg-sky-100 text-sky-700 ring-sky-200";
   if (status === "pending") return "bg-indigo-100 text-indigo-700 ring-indigo-200";
   if (status === "paid") return "bg-blue-100 text-blue-700 ring-blue-200";
-  if (status === "rejected" || status === "cancelled")
+  if (status === "rejected" || status === "cancelled") {
     return "bg-red-100 text-red-700 ring-red-200";
+  }
   return "bg-slate-100 text-slate-700 ring-slate-200";
 };
 
@@ -74,7 +75,11 @@ const formatDate = (value) => {
   const d = new Date(value);
   return Number.isNaN(d.getTime())
     ? value
-    : d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+    : d.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
 };
 
 const toDateTimeLocal = (value) => {
@@ -106,7 +111,12 @@ const formatType = (type) => {
   return type === "telemedicine" ? "Telemedicine" : "In Person";
 };
 
-const createEmptyMedicine = () => ({ name: "", dosage: "", frequency: "", duration: "" });
+const createEmptyMedicine = () => ({
+  name: "",
+  dosage: "",
+  frequency: "",
+  duration: "",
+});
 
 const getDisplayPatientName = (appointment, patient, user) => {
   return (
@@ -128,11 +138,13 @@ const getDisplayDoctorName = (appointment, doctor) => {
 };
 
 /* ────────────────────────────────────────────
-   Sub-components
+   Shared small components
 ──────────────────────────────────────────── */
 const InfoCard = ({ label, value }) => (
   <div className="rounded-2xl bg-blue-50/50 p-4 transition duration-200 hover:shadow-sm">
-    <p className="text-xs font-medium uppercase tracking-wide text-blue-400">{label}</p>
+    <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
+      {label}
+    </p>
     <p className="mt-2 text-sm font-medium text-slate-700">{value || "N/A"}</p>
   </div>
 );
@@ -151,6 +163,7 @@ const MedicineRow = ({ medicine, index, total, onChange, onRemove }) => (
         </button>
       )}
     </div>
+
     <div className="grid gap-3 sm:grid-cols-2">
       {[
         ["name", "Medicine name"],
@@ -172,7 +185,7 @@ const MedicineRow = ({ medicine, index, total, onChange, onRemove }) => (
 );
 
 /* ────────────────────────────────────────────
-   Prescription Panel (doctor-only)
+   Prescription Panel
 ──────────────────────────────────────────── */
 const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
   const [prescription, setPrescription] = useState(null);
@@ -191,6 +204,7 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
     maxRefills: 0,
     medicines: [createEmptyMedicine()],
   };
+
   const [form, setForm] = useState(emptyForm);
 
   const loadPrescription = async () => {
@@ -211,6 +225,7 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
 
   const startEdit = () => {
     if (!prescription) return;
+
     setForm({
       diagnosis: prescription.diagnosis || "",
       instructions: prescription.instructions || "",
@@ -230,6 +245,7 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
             }))
           : [createEmptyMedicine()],
     });
+
     setMode("edit");
   };
 
@@ -240,7 +256,9 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
 
   const validateMedicines = (medicines) =>
     medicines.every((m) =>
-      [m.name, m.dosage, m.frequency, m.duration].every((f) => String(f || "").trim())
+      [m.name, m.dosage, m.frequency, m.duration].every((f) =>
+        String(f || "").trim()
+      )
     );
 
   const handleSave = async () => {
@@ -274,13 +292,16 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
 
     try {
       setSaving(true);
+
       if (mode === "create") {
         await createPrescription(payload);
       } else {
         await updatePrescription(prescription._id, payload);
       }
+
       await loadPrescription();
       setMode("view");
+
       await Swal.fire({
         icon: "success",
         title: mode === "create" ? "Prescription created" : "Prescription updated",
@@ -309,6 +330,7 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
       cancelButtonText: "Cancel",
       confirmButtonColor: "#dc2626",
     });
+
     if (!confirm.isConfirmed) return;
 
     try {
@@ -316,6 +338,7 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
       await deletePrescription(prescription._id);
       setPrescription(null);
       setMode("view");
+
       await Swal.fire({
         icon: "success",
         title: "Prescription deleted",
@@ -342,7 +365,10 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
     }));
 
   const addMed = () =>
-    setForm((prev) => ({ ...prev, medicines: [...prev.medicines, createEmptyMedicine()] }));
+    setForm((prev) => ({
+      ...prev,
+      medicines: [...prev.medicines, createEmptyMedicine()],
+    }));
 
   const removeMed = (index) =>
     setForm((prev) => ({
@@ -678,11 +704,14 @@ const AppointmentDetailsPage = () => {
 
   const loadAppointment = async () => {
     try {
+      setLoading(true);
       setError("");
+
       const data = await getAppointmentById(id);
       const appointmentData = data?.appointment || null;
 
       setAppointment(appointmentData);
+
       setDoctorForm({
         consultationFee: appointmentData?.consultationFee || "",
         scheduledDateTime: toDateTimeLocal(
@@ -709,7 +738,9 @@ const AppointmentDetailsPage = () => {
         extraRequests.push(
           axios
             .get(`${AUTH_BASE_URL}/api/doctor/patients/${appointmentData.patientId}`)
-            .then((res) => setPatientDetails(res?.data?.patient || res?.data?.user || null))
+            .then((res) =>
+              setPatientDetails(res?.data?.patient || res?.data?.user || null)
+            )
             .catch(() => setPatientDetails(null))
         );
       } else {
@@ -779,6 +810,7 @@ const AppointmentDetailsPage = () => {
       setSubmitting(true);
       setError("");
       setActionMessage("");
+
       const payload = {
         status,
         consultationFee: Number(doctorForm.consultationFee),
@@ -786,6 +818,7 @@ const AppointmentDetailsPage = () => {
         doctorResponseNote: doctorForm.doctorResponseNote,
         rescheduleReason: doctorForm.rescheduleReason,
       };
+
       const response = await updateAppointmentStatus(id, payload);
       setAppointment(response?.appointment || null);
 
@@ -870,6 +903,7 @@ const AppointmentDetailsPage = () => {
             <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
               {formatType(appointment?.appointmentType)}
             </span>
+
             {appointment?.status && (
               <span
                 className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${badgeClass(
@@ -879,6 +913,7 @@ const AppointmentDetailsPage = () => {
                 {appointment.status.replace("_", " ")}
               </span>
             )}
+
             {appointment?.paymentStatus && (
               <span
                 className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${badgeClass(
@@ -889,9 +924,11 @@ const AppointmentDetailsPage = () => {
               </span>
             )}
           </div>
+
           <h1 className="mt-4 text-2xl font-bold text-blue-700">
             {appointment?.reason || "Doctor Consultation"}
           </h1>
+
           <p className="mt-2 text-sm text-slate-500">
             Review appointment information, payment progress, and session availability.
           </p>
@@ -925,7 +962,10 @@ const AppointmentDetailsPage = () => {
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               <InfoCard label="Patient" value={displayPatientName} />
               <InfoCard label="Doctor" value={displayDoctorName} />
-              <InfoCard label="Appointment Type" value={formatType(appointment.appointmentType)} />
+              <InfoCard
+                label="Appointment Type"
+                value={formatType(appointment.appointmentType)}
+              />
               <InfoCard
                 label="Preferred Date & Time"
                 value={formatDateTime(appointment.preferredDateTime)}
@@ -952,9 +992,9 @@ const AppointmentDetailsPage = () => {
               />
             </div>
 
-            {/* Notes */}
             <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
               <h2 className="text-lg font-bold text-blue-700">Notes</h2>
+
               <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div className="rounded-2xl bg-blue-50/50 p-4">
                   <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
@@ -964,6 +1004,7 @@ const AppointmentDetailsPage = () => {
                     {appointment.patientNotes || "No patient notes"}
                   </p>
                 </div>
+
                 <div className="rounded-2xl bg-blue-50/50 p-4">
                   <p className="text-xs font-medium uppercase tracking-wide text-blue-400">
                     Status Summary
@@ -1011,6 +1052,7 @@ const AppointmentDetailsPage = () => {
                         className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
                       />
                     </div>
+
                     <div>
                       <label className="mb-2 block text-sm font-medium text-slate-700">
                         Final appointment date & time
@@ -1047,6 +1089,7 @@ const AppointmentDetailsPage = () => {
                         placeholder="Required when rejecting. Optional for accepted or rescheduled."
                       />
                     </div>
+
                     <div>
                       <label className="mb-2 block text-sm font-medium text-slate-700">
                         Reschedule reason
@@ -1075,6 +1118,7 @@ const AppointmentDetailsPage = () => {
                     >
                       Accept & Request Payment
                     </button>
+
                     <button
                       type="button"
                       disabled={submitting}
@@ -1083,6 +1127,7 @@ const AppointmentDetailsPage = () => {
                     >
                       Reschedule
                     </button>
+
                     <button
                       type="button"
                       disabled={submitting}
@@ -1091,6 +1136,7 @@ const AppointmentDetailsPage = () => {
                     >
                       Reject
                     </button>
+
                     <button
                       type="button"
                       disabled={submitting}
@@ -1114,11 +1160,13 @@ const AppointmentDetailsPage = () => {
             {appointment.appointmentType === "telemedicine" && (
               <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
                 <h2 className="text-lg font-bold text-blue-700">Telemedicine Session</h2>
+
                 {sessionLoading && (
                   <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm text-blue-700">
                     Loading session details...
                   </div>
                 )}
+
                 {!sessionLoading && session && (
                   <div className="mt-4 grid gap-4 md:grid-cols-3">
                     <InfoCard label="Platform" value={session.platform || "Jitsi"} />
@@ -1129,6 +1177,7 @@ const AppointmentDetailsPage = () => {
                     />
                   </div>
                 )}
+
                 {!sessionLoading && !session && (
                   <div className="mt-4 rounded-2xl bg-blue-50 p-4 text-sm text-slate-600">
                     The telemedicine session will be available after payment confirmation.
