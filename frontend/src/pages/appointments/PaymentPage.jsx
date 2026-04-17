@@ -22,6 +22,10 @@ const PaymentPage = () => {
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState("");
 
+  const appointmentStatus = String(appointment?.status || "").toLowerCase();
+  const paymentStatus = String(appointment?.paymentStatus || "").toLowerCase();
+  const canPay = ["awaiting_payment", "accepted"].includes(appointmentStatus) && paymentStatus !== "paid";
+
   useEffect(() => {
     const loadAppointment = async () => {
       try {
@@ -148,8 +152,7 @@ const PaymentPage = () => {
                 </p>
               </div>
 
-              {appointment.status === "awaiting_payment" &&
-              appointment.paymentStatus !== "paid" ? (
+              {canPay ? (
                 <button
                   onClick={handleStripeCheckout}
                   disabled={paying}

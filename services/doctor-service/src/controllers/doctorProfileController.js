@@ -3,6 +3,8 @@ const ConsultationNote = require("../models/ConsultationNote");
 const Prescription = require("../models/Prescription");
 const Availability = require("../models/Availability");
 
+const { getUserContacts } = require("../utils/serviceCaller.js");
+
 exports.getDoctorProfile = async (req, res) => {
   try {
     let profile = await DoctorProfile.findOne({ userId: req.user.id });
@@ -84,5 +86,42 @@ exports.getDoctorPatients = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.getDoctorDetailsById = async (req, res) => {
+  try {
+    const { doctorId } = req.params;
+    const token = req.headers.authorization?.split(" ")[1];
+
+    if (!doctorId) {
+      return res.status(400).json({ message: "doctorId is required" });
+    }
+
+    const contact = token ? await getUserContacts(doctorId, token) : null;
+    const profile = await DoctorProfile.findOne({ userId: doctorId });
+
+    return res.status(200).json({
+      success: true,
+      doctor: {
+        id: doctorId,
+        fullName: contact?.fullName || "Doctor Name Unavailable",
+        email: contact?.email || null,
+        phone: contact?.phone || null,
+        specialization: profile?.specialization || null,
+        qualifications: profile?.qualifications || [],
+        experience: profile?.experience ?? 0,
+        consultationFee: profile?.consultationFee ?? 0,
+        languages: profile?.languages || [],
+        about: profile?.about || null,
+        profileImage: profile?.profileImage || null,
+        ratings: profile?.ratings || { average: 0, count: 0 },
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
   }
 };

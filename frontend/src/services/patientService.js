@@ -77,3 +77,4 @@ export const getPatientPrescriptionById = async (prescriptionId) => {
   const response = await axios.get(`${PATIENT_BASE_URL}/api/patient/prescriptions/${prescriptionId}`);
   return response.data;
 };
+
