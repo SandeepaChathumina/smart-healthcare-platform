@@ -67,12 +67,18 @@ services:
   notification-service:
     build: ../../services/notification-service
     ports:
-      - "5011:5010"
+      - "5010:5010"
     environment:
       - PORT=5010
       - MONGO_URI=${NOTIFICATION_MONGO_URI}
-      - AUTH_SERVICE_URL=http://auth-service:5001
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL}
       - INTERNAL_SERVICE_API_KEY=${INTERNAL_SERVICE_API_KEY}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASS=${EMAIL_PASS}
+      - EMAIL_SERVICE=${EMAIL_SERVICE}
+      - INFOBIP_BASE_URL=${INFOBIP_BASE_URL}
+      - INFOBIP_API_KEY=${INFOBIP_API_KEY}
+      - INFOBIP_SENDER_ID=${INFOBIP_SENDER_ID}
     depends_on:
       # - mongo
       - auth-service
@@ -95,6 +101,7 @@ services:
       - VITE_PATIENT_BASE_URL=${VITE_PATIENT_BASE_URL}
       - VITE_DOCTOR_BASE_URL=${VITE_DOCTOR_BASE_URL}
       - VITE_APPOINTMENT_BASE_URL=${VITE_APPOINTMENT_BASE_URL}
+      - VITE_NOTIFICATION_BASE_URL=${VITE_NOTIFICATION_BASE_URL}
 
 
 volumes:

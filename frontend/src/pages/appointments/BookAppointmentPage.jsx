@@ -11,12 +11,16 @@ import {
   BadgeInfo,
 } from "lucide-react";
 import DashboardLayout from "../../layouts/DashboardLayout";
+import useAuth from "../../hooks/useAuth";
 import { createAppointment } from "../../services/appointmentService";
 import { getAllAvailabilitySlots } from "../../services/doctorService";
 import axios from "../../lib/axios";
 
 const AUTH_BASE_URL =
   import.meta.env.VITE_AUTH_BASE_URL || "http://localhost:5001";
+
+const NOTIFICATION_BASE_URL =
+  import.meta.env.VITE_NOTIFICATION_BASE_URL || "http://localhost:5010";
 
 const WEEKDAY = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -100,8 +104,102 @@ const getDoctorDetailsById = async (doctorId) => {
   return response.data;
 };
 
+const sendAppointmentBookedNotification = async ({
+  patient,
+  doctorId,
+  doctorName,
+  appointmentId,
+  reason,
+  appointmentDate,
+  appointmentTime,
+  appointmentType,
+}) => {
+  const senderName =
+    patient?.fullName ||
+    patient?.name ||
+    patient?.email ||
+    "Patient";
+
+  const senderRole = patient?.role || "Patient";
+  const senderId = patient?.id || patient?._id;
+
+  if (!senderId || !doctorId) {
+    return;
+  }
+
+  const readableType =
+    appointmentType === "telemedicine"
+      ? "Telemedicine"
+      : appointmentType === "in_person"
+      ? "In-person"
+      : "Appointment";
+
+  const safeDoctorName = doctorName || "Doctor";
+  const safeReason = reason || "Doctor Consultation";
+  const safeDate = appointmentDate || "Not specified";
+  const safeTime = appointmentTime || "Not specified";
+
+  const doctorPayload = {
+    senderId,
+    senderRole,
+    senderName,
+    receiverIds: [doctorId],
+    eventType: "CUSTOM",
+    metadata: {
+      appointmentId,
+      emailSubject: "New Appointment Booking Request",
+      emailMessage:
+        `Hello ${safeDoctorName},\n\n` +
+        `${senderName} has booked a new appointment request.\n\n` +
+        `Reason: ${safeReason}\n` +
+        `Appointment Type: ${readableType}\n` +
+        `Requested Date: ${safeDate}\n` +
+        `Requested Time: ${safeTime}\n` +
+        `Appointment ID: ${appointmentId}\n\n` +
+        `Please log in to the system to review and manage this booking.`,
+      smsMessage:
+        `${senderName} booked a new ${readableType} appointment. ` +
+        `Reason: ${safeReason}. Date: ${safeDate}, Time: ${safeTime}. ` +
+        `Appointment ID: ${appointmentId}.`,
+    },
+  };
+
+  const patientPayload = {
+    senderId,
+    senderRole,
+    senderName,
+    receiverIds: [senderId],
+    eventType: "CUSTOM",
+    metadata: {
+      appointmentId,
+      emailSubject: "Appointment Booking Confirmation",
+      emailMessage:
+        `Hello ${senderName},\n\n` +
+        `Your appointment request has been created successfully.\n\n` +
+        `Doctor: ${safeDoctorName}\n` +
+        `Reason: ${safeReason}\n` +
+        `Appointment Type: ${readableType}\n` +
+        `Requested Date: ${safeDate}\n` +
+        `Requested Time: ${safeTime}\n` +
+        `Appointment ID: ${appointmentId}\n\n` +
+        `You will be notified once the doctor reviews your request.`,
+      smsMessage:
+        `Your appointment request was created successfully with ${safeDoctorName}. ` +
+        `Type: ${readableType}. Date: ${safeDate}, Time: ${safeTime}. ` +
+        `Appointment ID: ${appointmentId}.`,
+    },
+  };
+
+  await Promise.allSettled([
+    axios.post(`${NOTIFICATION_BASE_URL}/api/notifications/send`, doctorPayload),
+    axios.post(`${NOTIFICATION_BASE_URL}/api/notifications/send`, patientPayload),
+  ]);
+};
+
 const BookAppointmentPage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
   const [slots, setSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -250,13 +348,16 @@ const BookAppointmentPage = () => {
 
     try {
       setSaving(true);
+
+      const finalAppointmentType =
+        selectedSlot.consultationType === "both"
+          ? formData.appointmentType
+          : selectedSlot.consultationType;
+
       const payload = {
         doctorId: selectedSlot.doctorId,
         availabilityId: selectedSlot._id,
-        appointmentType:
-          selectedSlot.consultationType === "both"
-            ? formData.appointmentType
-            : selectedSlot.consultationType,
+        appointmentType: finalAppointmentType,
         appointmentDate: formData.appointmentDate,
         appointmentTime: formData.appointmentTime,
         reason: formData.reason.trim(),
@@ -266,6 +367,25 @@ const BookAppointmentPage = () => {
 
       const data = await createAppointment(payload);
       const appointmentId = data?.appointment?._id;
+
+      try {
+        await sendAppointmentBookedNotification({
+          patient: user,
+          doctorId: selectedSlot.doctorId,
+          doctorName: selectedSlot.doctor?.fullName,
+          appointmentId,
+          reason: formData.reason.trim(),
+          appointmentDate: formData.appointmentDate,
+          appointmentTime: formData.appointmentTime,
+          appointmentType: finalAppointmentType,
+        });
+      } catch (notificationError) {
+        console.error(
+          "Appointment created, but failed to send notification:",
+          notificationError?.response?.data || notificationError.message
+        );
+      }
+
       setSuccess("Appointment created successfully");
 
       setTimeout(() => {
