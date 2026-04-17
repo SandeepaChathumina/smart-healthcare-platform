@@ -27,6 +27,19 @@ export const getReportById = async (reportId) => {
   return response.data;
 };
 
+export const updateReport = async (reportId, formData) => {
+  const response = await axios.put(
+    `${PATIENT_BASE_URL}/api/patient/reports/${reportId}`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+  return response.data;
+};
+
 export const deleteReport = async (reportId) => {
   const response = await axios.delete(`${PATIENT_BASE_URL}/api/patient/reports/${reportId}`);
   return response.data;

@@ -153,6 +153,88 @@ exports.getReportById = async (req, res) => {
   }
 };
 
+// Update report metadata and optional file
+exports.updateReport = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reportTitle, reportType, appointmentId, description } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid report ID' });
+    }
+
+    const report = await PatientReport.findOne({
+      _id: id,
+      patientId: req.user.id,
+      isDeleted: false
+    });
+
+    if (!report) {
+      return res.status(404).json({ message: 'Report not found' });
+    }
+
+    if (reportTitle !== undefined && !reportTitle.trim()) {
+      return res.status(400).json({ message: 'reportTitle cannot be empty' });
+    }
+
+    if (reportTitle !== undefined) report.reportTitle = reportTitle.trim();
+    if (reportType !== undefined) report.reportType = reportType;
+    if (description !== undefined) report.description = description;
+
+    if (appointmentId !== undefined) {
+      if (!appointmentId) {
+        report.appointmentId = null;
+        report.doctorId = null;
+        report.appointmentDetails = undefined;
+      } else {
+        if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
+          return res.status(400).json({ message: 'Invalid appointment ID format' });
+        }
+
+        const linkedAppointment = await Appointment.findOne({
+          _id: appointmentId,
+          patientId: req.user.id
+        });
+
+        if (!linkedAppointment) {
+          return res.status(404).json({ message: 'Appointment not found for this patient' });
+        }
+
+        report.appointmentId = linkedAppointment._id;
+        report.doctorId = linkedAppointment.doctorId || null;
+        report.appointmentDetails = {
+          reason: linkedAppointment.reason || '',
+          appointmentType: linkedAppointment.appointmentType || '',
+          preferredDateTime: linkedAppointment.preferredDateTime || null,
+          scheduledDateTime: linkedAppointment.scheduledDateTime || null,
+          status: linkedAppointment.status || ''
+        };
+      }
+    }
+
+    if (req.file) {
+      report.fileName = req.file.originalname;
+      report.fileUrl = `/uploads/${req.file.filename}`;
+      report.filePath = req.file.path;
+      report.fileSize = req.file.size;
+      report.mimeType = req.file.mimetype;
+    }
+
+    await report.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Report updated successfully',
+      report
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
 // Delete report (soft delete)
 exports.deleteReport = async (req, res) => {
   try {

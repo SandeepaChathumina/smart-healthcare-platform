@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Edit2, Save, X, Heart, Activity, Pill, AlertCircle, Plus, Trash2 } from 'lucide-react';
+import { Edit2, Save, X, Heart, Activity, Pill, AlertCircle, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import { getMedicalHistory, updateMedicalHistory } from '../../services/patientService';
 
@@ -20,7 +21,7 @@ const ChronicConditionInput = ({ condition, index, onUpdate, onRemove }) => {
         value={condition.diagnosedYear || ''}
         onChange={(e) => onUpdate(index, 'diagnosedYear', e.target.value)}
         placeholder="Diagnosed year"
-        min="1900"
+        min="2000"
         max="2026"
         className="mb-2 w-full rounded-lg border border-slate-300 p-2 text-sm focus:border-blue-500 focus:outline-none"
       />
@@ -134,7 +135,7 @@ const ChronicConditionView = ({ condition }) => (
   <div className="rounded-lg bg-slate-50 p-3">
     <p className="font-medium text-slate-900">{condition.condition}</p>
     <p className="text-sm text-slate-600">
-      Diagnosed: {condition.diagnosedYear} | Status: {condition.status}
+      Diagnosed: {condition.diagnosedYear || 'N/A'} | Status: {condition.status || 'Active'}
     </p>
     {condition.notes && (
       <p className="mt-1 text-sm text-slate-500">{condition.notes}</p>
@@ -184,6 +185,11 @@ const MedicalHistoryPage = () => {
   const [currentMedications, setCurrentMedications] = useState([]);
   const [allergies, setAllergies] = useState([]);
   const [notes, setNotes] = useState('');
+  const hasMedicalHistoryData =
+    (medicalHistory?.chronicConditions?.length || 0) > 0 ||
+    (medicalHistory?.currentMedications?.length || 0) > 0 ||
+    (medicalHistory?.allergies?.length || 0) > 0 ||
+    Boolean((medicalHistory?.notes || '').trim());
 
   const loadMedicalHistory = async () => {
     try {
@@ -218,15 +224,51 @@ const MedicalHistoryPage = () => {
         notes,
       };
       await updateMedicalHistory(payload);
-      toast.success('Medical history updated successfully');
+      await Swal.fire({
+        icon: 'success',
+        title: 'Medical history updated',
+        text: 'Your medical history changes were saved successfully.',
+      });
       setEditing(false);
       await loadMedicalHistory();
     } catch (error) {
       console.error('Failed to update medical history:', error);
-      toast.error('Failed to update medical history');
+      const message = error?.response?.data?.message || 'Failed to update medical history';
+      await Swal.fire({
+        icon: 'error',
+        title: 'Save failed',
+        text: message,
+      });
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleStartAdd = () => {
+    setEditing(true);
+    if (chronicConditions.length === 0) {
+      setChronicConditions([{ condition: '', diagnosedYear: '', status: 'Active', notes: '' }]);
+    }
+  };
+
+  const handleStartEdit = () => {
+    setEditing(true);
+  };
+
+  const handleCancelEdit = async () => {
+    const result = await Swal.fire({
+      icon: 'question',
+      title: 'Discard changes?',
+      text: 'Unsaved medical history changes will be lost.',
+      showCancelButton: true,
+      confirmButtonText: 'Discard',
+      cancelButtonText: 'Keep editing',
+      confirmButtonColor: '#dc2626',
+    });
+
+    if (!result.isConfirmed) return;
+    setEditing(false);
+    loadMedicalHistory();
   };
 
   // Chronic Conditions handlers
@@ -296,13 +338,23 @@ const MedicalHistoryPage = () => {
             </p>
           </div>
           {!editing ? (
-            <button
-              onClick={() => setEditing(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-            >
-              <Edit2 className="h-4 w-4" />
-              Edit History
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={handleStartAdd}
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+              >
+                <Plus className="h-4 w-4" />
+                Add History
+              </button>
+              <button
+                onClick={handleStartEdit}
+                disabled={!hasMedicalHistoryData}
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Edit2 className="h-4 w-4" />
+                Edit History
+              </button>
+            </div>
           ) : (
             <div className="flex gap-2">
               <button
@@ -318,10 +370,7 @@ const MedicalHistoryPage = () => {
                 {saving ? 'Saving...' : 'Save Changes'}
               </button>
               <button
-                onClick={() => {
-                  setEditing(false);
-                  loadMedicalHistory();
-                }}
+                onClick={handleCancelEdit}
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
                 <X className="h-4 w-4" />

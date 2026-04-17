@@ -4,7 +4,7 @@ import useAuth from '../../hooks/useAuth';
 import { APP_ROUTES } from '../../constants/routes';
 
 const ProfilePage = () => {
-  const { user, token } = useAuth();
+  const { user } = useAuth();
 
   const getEditPath = () => {
     switch (user?.role) {
@@ -19,15 +19,68 @@ const ProfilePage = () => {
     }
   };
 
+  const fullName = user?.fullName || 'User';
+  const initials = fullName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('');
+
+  const detailRows = [
+    { label: 'Full Name', value: user?.fullName || '-' },
+    { label: 'Email', value: user?.email || '-' },
+    { label: 'Phone', value: user?.phone || '-' },
+    { label: 'Address', value: user?.location?.address || '-' },
+    { label: 'City', value: user?.location?.city || '-' },
+  ];
+
   return (
     <DashboardLayout title="My Profile">
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+      <div className="space-y-6">
+        <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-xl font-bold text-blue-700">
+                {initials || 'U'}
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">{fullName}</h2>
+                <p className="mt-1 text-sm text-slate-600">{user?.email || '-'}</p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                {user?.role || 'Unknown role'}
+              </span>
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  user?.isVerified
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-amber-100 text-amber-700'
+                }`}
+              >
+                {user?.isVerified ? 'Verified' : 'Not Verified'}
+              </span>
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  user?.accountStatus === 'active'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-red-100 text-red-700'
+                }`}
+              >
+                {user?.accountStatus || 'Unknown status'}
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
           <div className="mb-6 flex items-start justify-between gap-4">
             <div>
               <h2 className="text-xl font-bold text-slate-900">Profile Information</h2>
               <p className="mt-1 text-sm text-slate-600">
-                Current logged-in user details.
+                Keep your personal details up to date for better communication.
               </p>
             </div>
 
@@ -39,59 +92,15 @@ const ProfilePage = () => {
             </Link>
           </div>
 
-          <div className="space-y-4 text-sm text-slate-700">
-            <div className="rounded-2xl bg-slate-100 p-4">
-              <span className="font-semibold text-slate-900">Full Name:</span> {user?.fullName}
-            </div>
-
-            <div className="rounded-2xl bg-slate-100 p-4">
-              <span className="font-semibold text-slate-900">Email:</span> {user?.email}
-            </div>
-
-            <div className="rounded-2xl bg-slate-100 p-4">
-              <span className="font-semibold text-slate-900">Phone:</span> {user?.phone}
-            </div>
-
-            <div className="rounded-2xl bg-slate-100 p-4">
-              <span className="font-semibold text-slate-900">Address:</span>{' '}
-              {user?.location?.address || '-'}
-            </div>
-
-            <div className="rounded-2xl bg-slate-100 p-4">
-              <span className="font-semibold text-slate-900">City:</span>{' '}
-              {user?.location?.city || '-'}
-            </div>
-
-            <div className="rounded-2xl bg-slate-100 p-4">
-              <span className="font-semibold text-slate-900">Role:</span> {user?.role}
-            </div>
-
-            <div className="rounded-2xl bg-slate-100 p-4">
-              <span className="font-semibold text-slate-900">Verified:</span>{' '}
-              {String(user?.isVerified)}
-            </div>
-
-            <div className="rounded-2xl bg-slate-100 p-4">
-              <span className="font-semibold text-slate-900">Account Status:</span>{' '}
-              {user?.accountStatus}
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-          <h2 className="text-xl font-bold text-slate-900">Developer View</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Temporary section for testing current auth data.
-          </p>
-
-          <div className="mt-6 space-y-4 text-sm text-slate-700">
-            <div className="rounded-2xl bg-slate-100 p-4">
-              <span className="font-semibold text-slate-900">User ID:</span> {user?.id}
-            </div>
-
-            <div className="rounded-2xl bg-slate-100 p-4 break-all">
-              <span className="font-semibold text-slate-900">Token:</span> {token}
-            </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {detailRows.map((item) => (
+              <div key={item.label} className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {item.label}
+                </p>
+                <p className="mt-1 text-sm font-medium text-slate-900">{item.value}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
