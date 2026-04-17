@@ -31,6 +31,14 @@ export const updateAppointmentStatus = async (appointmentId, payload) => {
   return response.data;
 };
 
+export const updatePatientAppointment = async (appointmentId, payload) => {
+  const response = await axios.patch(
+    `${APPOINTMENT_BASE_URL}/api/appointments/${appointmentId}/edit`,
+    payload
+  );
+  return response.data;
+};
+
 export const cancelAppointment = async (appointmentId, payload) => {
   const response = await axios.patch(
     `${APPOINTMENT_BASE_URL}/api/appointments/${appointmentId}/cancel`,

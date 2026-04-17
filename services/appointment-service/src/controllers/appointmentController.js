@@ -667,6 +667,135 @@ export const getAppointmentById = async (req, res) => {
   }
 };
 
+export const updatePatientAppointment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      reason,
+      symptomsSummary,
+      patientNotes,
+      preferredDateTime,
+      rescheduleReason,
+    } = req.body;
+
+    const loggedInUserId = req.user?.id || req.user?._id || req.user?.userId;
+
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid appointment ID" });
+    }
+
+    const appointment = await Appointment.findById(id);
+
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found" });
+    }
+
+    if (req.user.role !== "Patient") {
+      return res
+        .status(403)
+        .json({ message: "Only patients can edit appointments" });
+    }
+
+    if (String(appointment.patientId) !== String(loggedInUserId)) {
+      return res
+        .status(403)
+        .json({ message: "You can only edit your own appointments" });
+    }
+
+    if (appointment.paymentStatus !== "unpaid") {
+      return res.status(400).json({
+        message: "Only unpaid appointments can be edited",
+      });
+    }
+
+    if (["completed", "cancelled", "rejected"].includes(appointment.status)) {
+      return res.status(400).json({
+        message: "This appointment cannot be edited in its current status",
+      });
+    }
+
+    const nextPreferredDateTime = parseSriLankaDateTimeLocal(preferredDateTime);
+    if (!nextPreferredDateTime || Number.isNaN(nextPreferredDateTime.getTime())) {
+      return res.status(400).json({ message: "Invalid preferredDateTime" });
+    }
+
+    if (nextPreferredDateTime <= new Date()) {
+      return res
+        .status(400)
+        .json({ message: "Preferred date/time must be in the future" });
+    }
+
+    const textError = validateCommonTextFields({
+      reason,
+      symptomsSummary,
+      patientNotes,
+      doctorResponseNote: appointment.doctorResponseNote,
+    });
+
+    if (textError) {
+      return res.status(400).json({ message: textError });
+    }
+
+    const conflictingAppointment = await findConflictingAppointment({
+      doctorId: appointment.doctorId,
+      startDateTime: nextPreferredDateTime,
+      durationMinutes: appointment.durationMinutes || APPOINTMENT_DURATION_MINUTES,
+      excludeAppointmentId: appointment._id,
+    });
+
+    if (conflictingAppointment) {
+      const conflictStart = getAppointmentStart(conflictingAppointment);
+      return res.status(400).json({
+        message: `Doctor already has another appointment at ${formatSriLankaDateTime(conflictStart)}`,
+      });
+    }
+
+    const previousStatus = appointment.status;
+    const previousAvailabilityId = appointment.availabilityId;
+
+    appointment.reason = String(reason).trim();
+    appointment.symptomsSummary = symptomsSummary
+      ? String(symptomsSummary).trim()
+      : "";
+    appointment.patientNotes = patientNotes ? String(patientNotes).trim() : "";
+    appointment.preferredDateTime = nextPreferredDateTime;
+    appointment.scheduledDateTime = null;
+    appointment.status = "rescheduled";
+    appointment.rescheduleReason = String(
+      rescheduleReason || "Rescheduled by patient after editing appointment",
+    ).trim();
+
+    if (appointment.paymentStatus !== "paid") {
+      appointment.paymentStatus = "unpaid";
+    }
+
+    await appointment.save();
+
+    const authToken = req.headers.authorization?.split(" ")[1];
+    if (previousAvailabilityId && authToken) {
+      const wasReserved = isReservedStatus(previousStatus);
+      const isNowReserved = isReservedStatus(appointment.status);
+      if (wasReserved && !isNowReserved) {
+        await decrementAvailabilityBookedCount(previousAvailabilityId, authToken);
+      }
+    }
+
+    appointment.availabilityId = null;
+    await appointment.save();
+
+    const [enrichedAppointment] = await enrichAppointments([appointment]);
+
+    return res.status(200).json({
+      message: "Appointment updated and marked as rescheduled",
+      appointment: enrichedAppointment,
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
+  }
+};
+
 export const updateAppointmentStatus = async (req, res) => {
   try {
     const { id } = req.params;

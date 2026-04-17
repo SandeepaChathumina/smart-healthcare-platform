@@ -15,9 +15,9 @@ import DashboardLayout from "../../layouts/DashboardLayout";
 import useAuth from "../../hooks/useAuth";
 import axios from "../../lib/axios";
 import {
-  cancelAppointment,
   getAppointmentById,
   getTelemedicineSessionByAppointment,
+  updatePatientAppointment,
   updateAppointmentStatus,
 } from "../../services/appointmentService";
 import {
@@ -1005,6 +1005,13 @@ const AppointmentDetailsPage = () => {
     doctorResponseNote: "",
     rescheduleReason: "",
   });
+  const [patientEditForm, setPatientEditForm] = useState({
+    preferredDateTime: "",
+    reason: "",
+    symptomsSummary: "",
+    patientNotes: "",
+    rescheduleReason: "",
+  });
 
   const isPatient = user?.role === "Patient";
   const isDoctor = user?.role === "Doctor";
@@ -1025,6 +1032,16 @@ const AppointmentDetailsPage = () => {
           appointmentData?.scheduledDateTime || appointmentData?.preferredDateTime
         ),
         doctorResponseNote: appointmentData?.doctorResponseNote || "",
+        rescheduleReason: appointmentData?.rescheduleReason || "",
+      });
+
+      setPatientEditForm({
+        preferredDateTime: toDateTimeLocal(
+          appointmentData?.preferredDateTime || appointmentData?.scheduledDateTime
+        ),
+        reason: appointmentData?.reason || "",
+        symptomsSummary: appointmentData?.symptomsSummary || "",
+        patientNotes: appointmentData?.patientNotes || "",
         rescheduleReason: appointmentData?.rescheduleReason || "",
       });
 
@@ -1159,41 +1176,57 @@ const AppointmentDetailsPage = () => {
     }
   };
 
-  const handleDoctorCancel = async () => {
-    const confirmCancel = await Swal.fire({
-      icon: "warning",
-      title: "Cancel appointment?",
-      text: "This appointment will be cancelled.",
-      showCancelButton: true,
-      confirmButtonText: "Yes, cancel it",
-      cancelButtonText: "No",
-      confirmButtonColor: "#dc2626",
-      cancelButtonColor: "#64748b",
-    });
+  const handlePatientEditAppointment = async () => {
+    if (!patientEditForm.reason.trim()) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Reason required",
+        text: "Please enter a reason for consultation.",
+        confirmButtonColor: "#2563eb",
+      });
+      return;
+    }
 
-    if (!confirmCancel.isConfirmed) return;
+    if (!patientEditForm.preferredDateTime) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Date and time required",
+        text: "Please choose your updated preferred appointment date and time.",
+        confirmButtonColor: "#2563eb",
+      });
+      return;
+    }
 
     try {
       setSubmitting(true);
       setError("");
       setActionMessage("");
 
-      await cancelAppointment(id, { cancellationReason: "Cancelled by doctor" });
+      const response = await updatePatientAppointment(id, {
+        preferredDateTime: patientEditForm.preferredDateTime,
+        reason: patientEditForm.reason,
+        symptomsSummary: patientEditForm.symptomsSummary,
+        patientNotes: patientEditForm.patientNotes,
+        rescheduleReason: patientEditForm.rescheduleReason,
+      });
+
+      setAppointment(response?.appointment || null);
+      setActionMessage("Appointment updated and marked as rescheduled.");
       await loadAppointment();
 
       await Swal.fire({
         icon: "success",
-        title: "Cancelled",
-        text: "Appointment cancelled successfully.",
+        title: "Appointment updated",
+        text: "Your appointment was edited and marked as rescheduled.",
         confirmButtonColor: "#2563eb",
       });
     } catch (err) {
-      const message = err?.response?.data?.message || "Failed to cancel appointment";
+      const message = err?.response?.data?.message || "Failed to update appointment";
       setError(message);
 
       await Swal.fire({
         icon: "error",
-        title: "Cancel Failed",
+        title: "Update Failed",
         text: message,
         confirmButtonColor: "#2563eb",
       });
@@ -1330,6 +1363,122 @@ const AppointmentDetailsPage = () => {
                 </div>
               </div>
             </div>
+
+            {isPatient &&
+              String(appointment.paymentStatus || "").toLowerCase() === "unpaid" &&
+              !["completed", "cancelled", "rejected"].includes(
+                String(appointment.status || "").toLowerCase()
+              ) && (
+                <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
+                  <h2 className="text-lg font-bold text-blue-700">
+                    Edit Unpaid Appointment
+                  </h2>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Editing an unpaid appointment will automatically mark it as rescheduled.
+                  </p>
+
+                  <div className="mt-5 grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        Preferred date & time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={patientEditForm.preferredDateTime}
+                        onChange={(e) =>
+                          setPatientEditForm((prev) => ({
+                            ...prev,
+                            preferredDateTime: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        Reschedule reason (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={patientEditForm.rescheduleReason}
+                        onChange={(e) =>
+                          setPatientEditForm((prev) => ({
+                            ...prev,
+                            rescheduleReason: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+                        placeholder="Need a different time"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        Reason for consultation
+                      </label>
+                      <input
+                        type="text"
+                        value={patientEditForm.reason}
+                        onChange={(e) =>
+                          setPatientEditForm((prev) => ({
+                            ...prev,
+                            reason: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        Symptoms summary
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={patientEditForm.symptomsSummary}
+                        onChange={(e) =>
+                          setPatientEditForm((prev) => ({
+                            ...prev,
+                            symptomsSummary: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mt-4">
+                    <label className="mb-2 block text-sm font-medium text-slate-700">
+                      Patient notes
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={patientEditForm.patientNotes}
+                      onChange={(e) =>
+                        setPatientEditForm((prev) => ({
+                          ...prev,
+                          patientNotes: e.target.value,
+                        }))
+                      }
+                      className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+                    />
+                  </div>
+
+                  <div className="mt-6">
+                    <button
+                      type="button"
+                      disabled={submitting}
+                      onClick={handlePatientEditAppointment}
+                      className="rounded-xl bg-amber-600 px-5 py-3 font-semibold text-white transition hover:bg-amber-700 disabled:opacity-60"
+                    >
+                      {submitting ? "Updating..." : "Update & Reschedule"}
+                    </button>
+                  </div>
+                </div>
+              )}
 
             {isPatient &&
               ["awaiting_payment", "accepted"].includes(
