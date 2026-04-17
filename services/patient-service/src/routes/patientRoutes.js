@@ -5,6 +5,7 @@ const {
   uploadReport,
   getAllReports,
   getReportById,
+  updateReport,
   deleteReport,
   getMedicalHistory,
   updateMedicalHistory,
@@ -24,6 +25,7 @@ router.use(protect, authorizeRoles('Patient'));
 router.post('/reports/upload', upload.single('file'), uploadReport);
 router.get('/reports', getAllReports);
 router.get('/reports/:id', getReportById);
+router.put('/reports/:id', upload.single('file'), updateReport);
 router.delete('/reports/:id', deleteReport);
 
 // Medical history routes

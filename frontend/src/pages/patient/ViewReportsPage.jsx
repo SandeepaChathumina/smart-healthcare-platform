@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FileText, Download, Trash2, Eye, Upload, Calendar, FileType } from 'lucide-react';
+import { FileText, Download, Trash2, Upload, Calendar, FileType, Pencil } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import { getAllReports, deleteReport, downloadReport } from '../../services/patientService';
 import { APP_ROUTES } from '../../constants/routes';
@@ -56,15 +57,33 @@ const ViewReportsPage = () => {
   };
 
   const handleDelete = async (reportId) => {
-    if (!window.confirm('Are you sure you want to delete this report?')) return;
+    const confirmation = await Swal.fire({
+      title: 'Delete this report?',
+      text: 'This action will remove the document from your report list.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, delete',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#dc2626',
+    });
+    if (!confirmation.isConfirmed) return;
     
     try {
       setDeletingId(reportId);
       await deleteReport(reportId);
-      toast.success('Report deleted successfully');
+      await Swal.fire({
+        icon: 'success',
+        title: 'Deleted',
+        text: 'Report deleted successfully.',
+      });
       loadReports();
     } catch (error) {
-      toast.error('Failed to delete report');
+      const message = error?.response?.data?.message || 'Failed to delete report';
+      await Swal.fire({
+        icon: 'error',
+        title: 'Delete failed',
+        text: message,
+      });
     } finally {
       setDeletingId(null);
     }
@@ -177,6 +196,13 @@ const ViewReportsPage = () => {
                   </div>
                   
                   <div className="flex gap-2">
+                    <Link
+                      to={`${APP_ROUTES.PATIENT_UPLOAD_REPORT}?edit=${report._id}`}
+                      className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                      title="Edit report"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Link>
                     <button
                       onClick={() => handleDownload(report._id, report.fileName)}
                       disabled={downloadingId === report._id}

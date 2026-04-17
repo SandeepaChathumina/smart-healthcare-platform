@@ -1,20 +1,24 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Upload, FileText, X, CheckCircle } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Upload, FileText, X } from 'lucide-react';
+import Swal from 'sweetalert2';
 import DashboardLayout from '../../layouts/DashboardLayout';
 import PrimaryButton from '../../components/ui/PrimaryButton';
-import { uploadReport } from '../../services/patientService';
+import { uploadReport, getReportById, updateReport } from '../../services/patientService';
 import { getAppointmentsByPatient } from '../../services/appointmentService';
 import useAuth from '../../hooks/useAuth';
 import { APP_ROUTES } from '../../constants/routes';
 
 const UploadReportPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const editReportId = searchParams.get('edit');
   const { user } = useAuth();
   const [file, setFile] = useState(null);
+  const [existingFile, setExistingFile] = useState(null);
   const [appointments, setAppointments] = useState([]);
   const [appointmentsLoading, setAppointmentsLoading] = useState(true);
+  const [reportLoading, setReportLoading] = useState(false);
   const [formData, setFormData] = useState({
     reportTitle: '',
     reportType: 'Lab Report',
@@ -44,6 +48,45 @@ const UploadReportPage = () => {
     loadAppointments();
   }, [user?.id]);
 
+  useEffect(() => {
+    const loadReportForEdit = async () => {
+      if (!editReportId) return;
+      try {
+        setReportLoading(true);
+        const data = await getReportById(editReportId);
+        const report = data?.report;
+        if (!report) return;
+
+        setFormData({
+          reportTitle: report.reportTitle || '',
+          reportType: report.reportType || 'Lab Report',
+          appointmentId:
+            typeof report.appointmentId === 'string'
+              ? report.appointmentId
+              : report.appointmentId?._id || '',
+          description: report.description || '',
+        });
+        setExistingFile({
+          fileName: report.fileName,
+          fileSize: report.fileSize,
+          mimeType: report.mimeType,
+        });
+      } catch (error) {
+        const message = error?.response?.data?.message || 'Failed to load report for editing';
+        await Swal.fire({
+          icon: 'error',
+          title: 'Unable to load report',
+          text: message,
+        });
+        navigate(APP_ROUTES.PATIENT_VIEW_REPORTS);
+      } finally {
+        setReportLoading(false);
+      }
+    };
+
+    loadReportForEdit();
+  }, [editReportId, navigate]);
+
   const reportTypes = [
     'Lab Report',
     'Prescription',
@@ -57,18 +100,27 @@ const UploadReportPage = () => {
     if (selectedFile) {
       // Validate file size (max 5MB)
       if (selectedFile.size > 5 * 1024 * 1024) {
-        toast.error('File size must be less than 5MB');
+        Swal.fire({
+          icon: 'error',
+          title: 'Invalid file size',
+          text: 'File size must be less than 5MB',
+        });
         return;
       }
       
       // Validate file type
       const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
       if (!allowedTypes.includes(selectedFile.type)) {
-        toast.error('Only PDF, JPEG, and PNG files are allowed');
+        Swal.fire({
+          icon: 'error',
+          title: 'Invalid file type',
+          text: 'Only PDF, JPEG, and PNG files are allowed',
+        });
         return;
       }
       
       setFile(selectedFile);
+      setExistingFile(null);
       
       // Create preview for images
       if (selectedFile.type.startsWith('image/')) {
@@ -93,33 +145,55 @@ const UploadReportPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!file) {
-      toast.error('Please select a file to upload');
+    if (!file && !existingFile && !editReportId) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'File required',
+        text: 'Please select a PDF/image file to upload',
+      });
       return;
     }
     
     if (!formData.reportTitle.trim()) {
-      toast.error('Please enter a report title');
+      await Swal.fire({
+        icon: 'error',
+        title: 'Title required',
+        text: 'Please enter a report title',
+      });
       return;
     }
     
     const uploadFormData = new FormData();
-    uploadFormData.append('file', file);
+    if (file) {
+      uploadFormData.append('file', file);
+    }
     uploadFormData.append('reportTitle', formData.reportTitle);
     uploadFormData.append('reportType', formData.reportType);
     uploadFormData.append('description', formData.description);
-    if (formData.appointmentId) {
-      uploadFormData.append('appointmentId', formData.appointmentId);
-    }
+    uploadFormData.append('appointmentId', formData.appointmentId || '');
     
     try {
       setUploading(true);
-      await uploadReport(uploadFormData);
-      toast.success('Report uploaded successfully!');
+      if (editReportId) {
+        await updateReport(editReportId, uploadFormData);
+      } else {
+        await uploadReport(uploadFormData);
+      }
+      await Swal.fire({
+        icon: 'success',
+        title: editReportId ? 'Report updated' : 'Report uploaded',
+        text: editReportId
+          ? 'Your medical document was updated successfully.'
+          : 'Your medical document was uploaded successfully.',
+      });
       navigate(APP_ROUTES.PATIENT_VIEW_REPORTS);
     } catch (error) {
       const message = error?.response?.data?.message || 'Failed to upload report';
-      toast.error(message);
+      await Swal.fire({
+        icon: 'error',
+        title: editReportId ? 'Update failed' : 'Upload failed',
+        text: message,
+      });
     } finally {
       setUploading(false);
     }
@@ -128,6 +202,9 @@ const UploadReportPage = () => {
   const removeFile = () => {
     setFile(null);
     setPreview(null);
+    if (editReportId) {
+      setExistingFile(null);
+    }
   };
 
   const formatDateTime = (value) => {
@@ -137,9 +214,23 @@ const UploadReportPage = () => {
     return date.toLocaleString();
   };
 
+  const formatDoctor = (appointment) => {
+    const doctor = appointment?.doctorId;
+    if (!doctor) return 'Doctor';
+    if (typeof doctor === 'string') return `Doctor ${doctor}`;
+    const fullName = [doctor.firstName, doctor.lastName].filter(Boolean).join(' ').trim();
+    return fullName ? `Dr. ${fullName}` : 'Doctor';
+  };
+
   return (
     <DashboardLayout title="Upload Medical Report">
       <div className="max-w-3xl rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+        {reportLoading ? (
+          <div className="rounded-2xl bg-slate-100 p-8 text-center">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+            <p className="mt-3 text-slate-600">Loading report data...</p>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* File Upload Area */}
           <div>
@@ -147,7 +238,7 @@ const UploadReportPage = () => {
               Upload File <span className="text-red-500">*</span>
             </label>
             
-            {!file ? (
+            {!file && !existingFile ? (
               <div className="relative">
                 <input
                   type="file"
@@ -171,10 +262,21 @@ const UploadReportPage = () => {
                   <div className="flex items-center gap-3">
                     <FileText className="h-8 w-8 text-blue-600" />
                     <div>
-                      <p className="font-medium text-slate-900">{file.name}</p>
-                      <p className="text-xs text-slate-500">
-                        {(file.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
+                      {file ? (
+                        <>
+                          <p className="font-medium text-slate-900">{file.name}</p>
+                          <p className="text-xs text-slate-500">
+                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="font-medium text-slate-900">{existingFile.fileName}</p>
+                          <p className="text-xs text-slate-500">
+                            {(existingFile.fileSize / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                   <button
@@ -242,7 +344,7 @@ const UploadReportPage = () => {
               <option value="">No appointment linked</option>
               {appointments.map((appointment) => (
                 <option key={appointment._id} value={appointment._id}>
-                  {`Doctor ${appointment.doctorId} - ${appointment.reason || 'Consultation'} - ${formatDateTime(
+                  {`${formatDoctor(appointment)} - ${appointment.reason || 'Consultation'} - ${formatDateTime(
                     appointment.scheduledDateTime || appointment.preferredDateTime
                   )}`}
                 </option>
@@ -277,7 +379,7 @@ const UploadReportPage = () => {
                   Uploading...
                 </>
               ) : (
-                'Upload Report'
+                editReportId ? 'Update Report' : 'Upload Report'
               )}
             </PrimaryButton>
             
@@ -290,6 +392,7 @@ const UploadReportPage = () => {
             </button>
           </div>
         </form>
+        )}
       </div>
     </DashboardLayout>
   );
