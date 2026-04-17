@@ -167,7 +167,7 @@ const LoginPage = () => {
             ) : null}
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          {/* <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="mb-3 text-sm font-semibold text-slate-800">Demo accounts</p>
 
             <div className="grid gap-3 sm:grid-cols-3">
@@ -198,7 +198,7 @@ const LoginPage = () => {
                 Doctor Demo
               </button>
             </div>
-          </div>
+          </div> */}
 
           <div className="flex items-center justify-between gap-4">
             <Link
