@@ -1090,23 +1090,7 @@ const AppointmentDetailsPage = () => {
                       />
                     </div>
 
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-slate-700">
-                        Reschedule reason
-                      </label>
-                      <textarea
-                        rows={3}
-                        value={doctorForm.rescheduleReason}
-                        onChange={(e) =>
-                          setDoctorForm((prev) => ({
-                            ...prev,
-                            rescheduleReason: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded-xl border border-blue-100 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-blue-200"
-                        placeholder="Required when rescheduling this appointment"
-                      />
-                    </div>
+                    {/* ? */}
                   </div>
 
                   <div className="mt-6 flex flex-wrap gap-3">
@@ -1119,14 +1103,14 @@ const AppointmentDetailsPage = () => {
                       Accept & Request Payment
                     </button>
 
-                    <button
+                    {/* <button
                       type="button"
                       disabled={submitting}
                       onClick={() => submitDoctorAction("rescheduled")}
                       className="rounded-xl border border-blue-200 bg-white px-5 py-3 font-semibold text-blue-700 transition hover:bg-blue-50 disabled:opacity-60"
                     >
                       Reschedule
-                    </button>
+                    </button> */}
 
                     <button
                       type="button"
@@ -1137,14 +1121,14 @@ const AppointmentDetailsPage = () => {
                       Reject
                     </button>
 
-                    <button
+                    {/* <button
                       type="button"
                       disabled={submitting}
                       onClick={handleDoctorCancel}
                       className="rounded-xl border border-slate-200 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
                     >
                       Cancel
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               )}

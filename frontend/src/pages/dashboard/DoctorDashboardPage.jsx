@@ -19,17 +19,17 @@ import { getAppointmentsByDoctor } from '../../services/appointmentService';
 const formatLkr = (value) => `LKR ${Number(value || 0).toLocaleString('en-LK')}`;
 
 const formatDateTime = (value) => {
-  if (!value) return 'Not scheduled yet';
+  if (!value) return "Not scheduled yet";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
 
-  return date.toLocaleString('en-GB', {
-    timeZone: 'Asia/Colombo',
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  return date.toLocaleString("en-GB", {
+    timeZone: "Asia/Colombo",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
     hour12: true,
   });
 };
@@ -127,7 +127,9 @@ const AppointmentCard = ({ appointment }) => {
 
 const UpcomingAppointmentsWidget = ({ appointments }) => {
   const upcoming = appointments
-    .filter((a) => ['pending', 'accepted', 'awaiting_payment', 'confirmed'].includes(a.status))
+    .filter((a) =>
+      ["pending", "accepted", "awaiting_payment", "confirmed"].includes(a.status)
+    )
     .slice(0, 3);
 
   if (upcoming.length === 0) {
@@ -141,28 +143,38 @@ const UpcomingAppointmentsWidget = ({ appointments }) => {
 
   return (
     <div className="space-y-3">
-      {upcoming.map((appointment) => (
-        <div
-          key={appointment._id}
-          className="flex items-center justify-between rounded-lg bg-slate-50 p-3"
-        >
-          <div>
-            <p className="text-sm font-medium text-slate-900">
-              Patient: {appointment.patientName || 'Patient'}
-            </p>
-            <p className="text-xs text-slate-500">
-              {formatDateTime(appointment.scheduledDateTime || appointment.preferredDateTime)}
-            </p>
-          </div>
+      {upcoming.map((appointment) => {
+        const patientDisplayName =
+          appointment.patientName?.trim() ||
+          appointment.patient?.fullName?.trim() ||
+          appointment.patient?.name?.trim() ||
+          "Patient";
 
-          <Link
-            to={`/doctor/appointments/${appointment._id}`}
-            className="rounded-lg border border-slate-300 px-2 py-1 text-xs"
+        return (
+          <div
+            key={appointment._id}
+            className="flex items-center justify-between rounded-lg bg-slate-50 p-4"
           >
-            View
-          </Link>
-        </div>
-      ))}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-slate-900">
+                Patient: {patientDisplayName}
+              </p>
+              <p className="text-xs text-slate-500">
+                {formatDateTime(
+                  appointment.scheduledDateTime || appointment.preferredDateTime
+                )}
+              </p>
+            </div>
+
+            <Link
+              to={`/doctor/appointments/${appointment._id}`}
+              className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
+            >
+              View
+            </Link>
+          </div>
+        );
+      })}
     </div>
   );
 };
