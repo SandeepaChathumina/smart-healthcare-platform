@@ -1024,6 +1024,27 @@ const AppointmentDetailsPage = () => {
               </div>
             </div>
 
+            {isPatient &&
+              ["awaiting_payment", "accepted"].includes(
+                String(appointment.status || "").toLowerCase()
+              ) &&
+              String(appointment.paymentStatus || "").toLowerCase() !== "paid" && (
+                <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-blue-100">
+                  <h2 className="text-lg font-bold text-blue-700">Payment Action</h2>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Your doctor has accepted this appointment. Complete payment to confirm your
+                    booking.
+                  </p>
+
+                  <Link
+                    to={`/patient/appointments/${appointment._id}/pay`}
+                    className="mt-4 inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition duration-200 hover:bg-blue-700"
+                  >
+                    Pay Now
+                  </Link>
+                </div>
+              )}
+
             {isDoctor &&
               ["pending", "rescheduled", "awaiting_payment"].includes(appointment.status) &&
               appointment.paymentStatus !== "paid" && (

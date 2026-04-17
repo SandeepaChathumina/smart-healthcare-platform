@@ -163,6 +163,13 @@ const PatientAppointmentsPage = () => {
 
         <div className="grid gap-5">
           {filteredAppointments.map((appointment) => {
+            const appointmentStatus = String(appointment.status || "").toLowerCase();
+            const paymentStatus = String(appointment.paymentStatus || "").toLowerCase();
+
+            const showPayNowButton =
+              ["awaiting_payment", "accepted"].includes(appointmentStatus) &&
+              paymentStatus !== "paid";
+
             const showSessionButton =
               appointment.appointmentType === "telemedicine" &&
               appointment.status === "confirmed" &&
@@ -257,13 +264,22 @@ const PatientAppointmentsPage = () => {
                     )}
                   </div>
 
-                  <div className="flex w-full flex-col gap-3 xl:w-40 xl:flex-shrink-0">
+                  <div className="flex w-full flex-col gap-3 xl:w-40 xl:shrink-0">
                     <Link
                       to={`/patient/appointments/${appointment._id}`}
                       className="inline-flex items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-center font-semibold text-white transition duration-200 hover:bg-blue-700"
                     >
                       View Details
                     </Link>
+
+                    {showPayNowButton && (
+                      <Link
+                        to={`/patient/appointments/${appointment._id}/pay`}
+                        className="inline-flex items-center justify-center rounded-xl border border-sky-200 bg-sky-50 px-5 py-3 text-center font-semibold text-sky-700 transition duration-200 hover:bg-sky-100"
+                      >
+                        Pay Now
+                      </Link>
+                    )}
 
                     {showSessionButton && (
                       <Link
