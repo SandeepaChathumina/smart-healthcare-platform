@@ -92,7 +92,7 @@ const AdminDashboardPage = () => {
           </div>
         )}
 
-        <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+        {/* <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
           <div className="mb-6 flex items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-bold text-slate-900">Admin Session Info</h2>
@@ -119,7 +119,7 @@ const AdminDashboardPage = () => {
             <p><strong>Account Status:</strong> {user?.accountStatus}</p>
             <p className="break-all"><strong>Token:</strong> {token}</p>
           </div>
-        </div>
+        </div> */}
       </div>
     </DashboardLayout>
   );
