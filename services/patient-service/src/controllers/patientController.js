@@ -15,69 +15,73 @@ exports.uploadReport = async (req, res) => {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
-    const { reportTitle, reportType, appointmentId, description } = req.body;
+    const {
+      reportTitle,
+      reportType,
+      appointmentId,
+      doctorId,
+      description,
+      appointmentDetails,
+    } = req.body;
 
     if (!reportTitle || !reportType) {
       return res.status(400).json({ message: 'reportTitle and reportType are required' });
     }
 
-    let linkedAppointment = null;
-    if (appointmentId) {
-      if (!mongoose.Types.ObjectId.isValid(appointmentId)) {
-        return res.status(400).json({ message: 'Invalid appointment ID format' });
-      }
+    let parsedAppointmentDetails = undefined;
 
-      linkedAppointment = await Appointment.findOne({
-        _id: appointmentId,
-        patientId: req.user.id
-      });
-
-      if (!linkedAppointment) {
-        return res.status(404).json({
-          message: 'Appointment not found for this patient'
-        });
+    if (appointmentDetails) {
+      try {
+        parsedAppointmentDetails =
+          typeof appointmentDetails === 'string'
+            ? JSON.parse(appointmentDetails)
+            : appointmentDetails;
+      } catch (error) {
+        return res.status(400).json({ message: 'Invalid appointmentDetails format' });
       }
+    }
+
+    if (appointmentId && !mongoose.Types.ObjectId.isValid(appointmentId)) {
+      return res.status(400).json({ message: 'Invalid appointment ID format' });
+    }
+
+    if (doctorId && !mongoose.Types.ObjectId.isValid(doctorId)) {
+      return res.status(400).json({ message: 'Invalid doctor ID format' });
     }
 
     const report = await PatientReport.create({
       patientId: req.user.id,
       appointmentId: appointmentId || null,
-      doctorId: linkedAppointment?.doctorId || null,
-      appointmentDetails: linkedAppointment
+      doctorId: doctorId || null,
+      appointmentDetails: parsedAppointmentDetails
         ? {
-            reason: linkedAppointment.reason || '',
-            appointmentType: linkedAppointment.appointmentType || '',
-            preferredDateTime: linkedAppointment.preferredDateTime || null,
-            scheduledDateTime: linkedAppointment.scheduledDateTime || null,
-            status: linkedAppointment.status || ''
+            reason: parsedAppointmentDetails.reason || '',
+            appointmentType: parsedAppointmentDetails.appointmentType || '',
+            preferredDateTime: parsedAppointmentDetails.preferredDateTime || null,
+            scheduledDateTime: parsedAppointmentDetails.scheduledDateTime || null,
+            status: parsedAppointmentDetails.status || '',
           }
         : undefined,
-      reportTitle,
-      reportType,
+      reportTitle: String(reportTitle).trim(),
+      reportType: String(reportType).trim(),
       fileName: req.file.originalname,
       fileUrl: `/uploads/${req.file.filename}`,
       filePath: req.file.path,
       fileSize: req.file.size,
       mimeType: req.file.mimetype,
-      description: description || '',
-      uploadedAt: new Date()
+      description: description ? String(description).trim() : '',
+      uploadedAt: new Date(),
     });
-
-    if (linkedAppointment) {
-      linkedAppointment.uploadedReportIds = linkedAppointment.uploadedReportIds || [];
-      linkedAppointment.uploadedReportIds.push(report._id);
-      await linkedAppointment.save();
-    }
 
     return res.status(201).json({
       success: true,
       message: 'Report uploaded successfully',
-      report
+      report,
     });
   } catch (error) {
     return res.status(500).json({
       message: 'Server error',
-      error: error.message
+      error: error.message,
     });
   }
 };
