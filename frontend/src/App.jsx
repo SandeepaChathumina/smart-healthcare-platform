@@ -35,12 +35,14 @@ import ViewReportsPage from "./pages/patient/ViewReportsPage";
 import MedicalHistoryPage from "./pages/patient/MedicalHistoryPage";
 import PrescriptionsPage from "./pages/patient/PrescriptionsPage";
 import PatientPrescriptionDetailsPage from "./pages/patient/PatientPrescriptionDetailsPage";
+import ConsultationNotesPage from "./pages/patient/ConsultationNotesPage";
 
 // Doctor Availability Pages
 import AvailabilityPage from "./pages/doctor/availability/AvailabilityPage";
 import AddAvailabilityPage from "./pages/doctor/availability/AddAvailabilityPage";
 import ViewAvailabilityPage from "./pages/doctor/availability/ViewAvailabilityPage";
 import DoctorPrescriptionsPage from "./pages/doctor/DoctorPrescriptionsPage";
+import DoctorConsultationNotesPage from "./pages/doctor/DoctorConsultationNotesPage";
 
 // Payment + Telemedicine Pages
 import PaymentPage from "./pages/appointments/PaymentPage";
@@ -174,6 +176,13 @@ function App() {
               <Route index element={<DoctorPrescriptionsPage />} />
             </Route>
 
+            <Route
+              path={APP_ROUTES.DOCTOR_CONSULTATION_NOTES}
+              element={<RoleProtectedRoute allowedRoles={["Doctor"]} />}
+            >
+              <Route index element={<DoctorConsultationNotesPage />} />
+            </Route>
+
             {/* Patient Routes */}
             <Route
               path={APP_ROUTES.PATIENT_DASHBOARD}
@@ -265,6 +274,13 @@ function App() {
               element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
             >
               <Route index element={<PatientPrescriptionDetailsPage />} />
+            </Route>
+
+            <Route
+              path={APP_ROUTES.PATIENT_CONSULTATION_NOTES}
+              element={<RoleProtectedRoute allowedRoles={["Patient"]} />}
+            >
+              <Route index element={<ConsultationNotesPage />} />
             </Route>
 
             {/* Telemedicine Route */}

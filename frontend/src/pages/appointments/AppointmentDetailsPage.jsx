@@ -21,8 +21,12 @@ import {
   updateAppointmentStatus,
 } from "../../services/appointmentService";
 import {
+  createConsultationNote,
+  deleteConsultationNote,
+  getConsultationNoteByAppointment,
   getPrescriptionByAppointment,
   createPrescription,
+  updateConsultationNote,
   updatePrescription,
   deletePrescription,
 } from "../../services/doctorService";
@@ -679,6 +683,309 @@ const PrescriptionPanel = ({ appointmentId, patientId, doctorId }) => {
 /* ────────────────────────────────────────────
    Main page
 ──────────────────────────────────────────── */
+const ConsultationNotePanel = ({ appointmentId }) => {
+  const [consultationNote, setConsultationNote] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [mode, setMode] = useState("view");
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [open, setOpen] = useState(true);
+  const [form, setForm] = useState({
+    notes: "",
+    diagnosis: "",
+    symptoms: "",
+    treatmentPlan: "",
+    followUpRequired: false,
+    followUpDate: "",
+    followUpNotes: "",
+  });
+
+  const loadConsultationNote = async () => {
+    try {
+      setLoading(true);
+      const data = await getConsultationNoteByAppointment(appointmentId);
+      setConsultationNote(data?.consultationNote || null);
+    } catch {
+      setConsultationNote(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (appointmentId) loadConsultationNote();
+  }, [appointmentId]);
+
+  const startEdit = () => {
+    if (!consultationNote) return;
+    setForm({
+      notes: consultationNote.notes || "",
+      diagnosis: consultationNote.diagnosis || "",
+      symptoms: consultationNote.symptoms || "",
+      treatmentPlan: consultationNote.treatmentPlan || "",
+      followUpRequired: Boolean(consultationNote.followUpRequired),
+      followUpDate: consultationNote.followUpDate
+        ? new Date(consultationNote.followUpDate).toISOString().split("T")[0]
+        : "",
+      followUpNotes: consultationNote.followUpNotes || "",
+    });
+    setMode("edit");
+  };
+
+  const startCreate = () => {
+    setForm({
+      notes: "",
+      diagnosis: "",
+      symptoms: "",
+      treatmentPlan: "",
+      followUpRequired: false,
+      followUpDate: "",
+      followUpNotes: "",
+    });
+    setMode("create");
+  };
+
+  const handleSave = async () => {
+    if (!String(form.notes || "").trim()) {
+      await Swal.fire({
+        icon: "warning",
+        title: "Consultation notes required",
+        text: "Please add consultation notes before saving.",
+      });
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const payload = {
+        appointmentId,
+        notes: form.notes.trim(),
+        diagnosis: form.diagnosis || undefined,
+        symptoms: form.symptoms || undefined,
+        treatmentPlan: form.treatmentPlan || undefined,
+        followUpRequired: form.followUpRequired,
+        followUpDate: form.followUpDate || undefined,
+        followUpNotes: form.followUpNotes || undefined,
+      };
+
+      if (mode === "create") {
+        await createConsultationNote(payload);
+      } else {
+        await updateConsultationNote(consultationNote._id, payload);
+      }
+
+      await loadConsultationNote();
+      setMode("view");
+      await Swal.fire({
+        icon: "success",
+        title: mode === "create" ? "Consultation note created" : "Consultation note updated",
+        text: "Changes saved successfully.",
+        timer: 1800,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      await Swal.fire({
+        icon: "error",
+        title: "Save failed",
+        text: err?.response?.data?.message || "Failed to save consultation note.",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    const confirmation = await Swal.fire({
+      icon: "warning",
+      title: "Delete consultation note?",
+      text: "This action cannot be undone.",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#dc2626",
+    });
+    if (!confirmation.isConfirmed) return;
+
+    try {
+      setDeleting(true);
+      await deleteConsultationNote(consultationNote._id);
+      setConsultationNote(null);
+      setMode("view");
+      await Swal.fire({
+        icon: "success",
+        title: "Consultation note deleted",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      await Swal.fire({
+        icon: "error",
+        title: "Delete failed",
+        text: err?.response?.data?.message || "Failed to delete consultation note.",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="rounded-3xl bg-white shadow-sm ring-1 ring-blue-100">
+      <button
+        onClick={() => setOpen((p) => !p)}
+        className="flex w-full items-center justify-between gap-3 rounded-3xl px-6 py-5 text-left transition hover:bg-blue-50/40"
+      >
+        <div>
+          <h2 className="text-lg font-bold text-blue-700">Consultation Note</h2>
+          <p className="text-xs text-slate-400">
+            {loading ? "Loading..." : consultationNote ? "1 consultation note for this appointment" : "No consultation note added yet"}
+          </p>
+        </div>
+        {open ? (
+          <ChevronUp className="h-5 w-5 text-slate-400" />
+        ) : (
+          <ChevronDown className="h-5 w-5 text-slate-400" />
+        )}
+      </button>
+
+      {open && (
+        <div className="border-t border-slate-100 px-6 pb-6 pt-4">
+          {loading && <p className="text-sm text-slate-500">Loading consultation note...</p>}
+
+          {!loading && !consultationNote && mode === "view" && (
+            <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50/40 p-6 text-center">
+              <p className="font-semibold text-slate-700">No consultation note available</p>
+              <button
+                type="button"
+                onClick={startCreate}
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+              >
+                <Plus className="h-4 w-4" />
+                Add Consultation Note
+              </button>
+            </div>
+          )}
+
+          {!loading && consultationNote && mode === "view" && (
+            <div className="space-y-4">
+              <div className="rounded-2xl bg-slate-50 p-4">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Notes</p>
+                <p className="mt-2 text-sm text-slate-700 whitespace-pre-wrap">{consultationNote.notes}</p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <InfoCard label="Diagnosis" value={consultationNote.diagnosis || "N/A"} />
+                <InfoCard label="Symptoms" value={consultationNote.symptoms || "N/A"} />
+                <InfoCard label="Treatment Plan" value={consultationNote.treatmentPlan || "N/A"} />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={startEdit}
+                  className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-60"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {deleting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {(mode === "create" || mode === "edit") && (
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">Consultation Notes</label>
+                <textarea
+                  rows={5}
+                  value={form.notes}
+                  onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+                  className="w-full rounded-xl border border-blue-100 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <input
+                  type="text"
+                  placeholder="Diagnosis"
+                  value={form.diagnosis}
+                  onChange={(e) => setForm((prev) => ({ ...prev, diagnosis: e.target.value }))}
+                  className="rounded-xl border border-blue-100 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+                />
+                <input
+                  type="text"
+                  placeholder="Symptoms"
+                  value={form.symptoms}
+                  onChange={(e) => setForm((prev) => ({ ...prev, symptoms: e.target.value }))}
+                  className="rounded-xl border border-blue-100 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+                />
+              </div>
+              <textarea
+                rows={3}
+                placeholder="Treatment plan"
+                value={form.treatmentPlan}
+                onChange={(e) => setForm((prev) => ({ ...prev, treatmentPlan: e.target.value }))}
+                className="w-full rounded-xl border border-blue-100 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+              />
+              <div className="flex items-center gap-2">
+                <input
+                  id="follow-up-required"
+                  type="checkbox"
+                  checked={form.followUpRequired}
+                  onChange={(e) => setForm((prev) => ({ ...prev, followUpRequired: e.target.checked }))}
+                  className="h-4 w-4"
+                />
+                <label htmlFor="follow-up-required" className="text-sm text-slate-700">
+                  Follow up required
+                </label>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <input
+                  type="date"
+                  value={form.followUpDate}
+                  onChange={(e) => setForm((prev) => ({ ...prev, followUpDate: e.target.value }))}
+                  className="rounded-xl border border-blue-100 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+                />
+                <input
+                  type="text"
+                  placeholder="Follow up notes"
+                  value={form.followUpNotes}
+                  onChange={(e) => setForm((prev) => ({ ...prev, followUpNotes: e.target.value }))}
+                  className="rounded-xl border border-blue-100 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-200"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
+                >
+                  <Save className="h-4 w-4" />
+                  {saving ? "Saving..." : mode === "create" ? "Add Note" : "Save Changes"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMode("view")}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+                >
+                  <X className="h-4 w-4" />
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AppointmentDetailsPage = () => {
   const { id } = useParams();
   const { user } = useAuth();
@@ -1132,6 +1439,10 @@ const AppointmentDetailsPage = () => {
                   </div>
                 </div>
               )}
+
+            {isDoctor && (
+              <ConsultationNotePanel appointmentId={id} />
+            )}
 
             {isDoctor && (
               <PrescriptionPanel

@@ -115,10 +115,27 @@ export const getMyConsultationNotes = async () => {
   return response.data;
 };
 
+export const getConsultationNotesByPatient = async (patientId, params = {}) => {
+  const queryParams = new URLSearchParams(params).toString();
+  const url = queryParams
+    ? `${DOCTOR_BASE_URL}/api/doctor/consultation-notes/patient/${patientId}?${queryParams}`
+    : `${DOCTOR_BASE_URL}/api/doctor/consultation-notes/patient/${patientId}`;
+
+  const response = await axios.get(url);
+  return response.data;
+};
+
 export const updateConsultationNote = async (id, payload) => {
   const response = await axios.patch(
     `${DOCTOR_BASE_URL}/api/doctor/consultation-notes/${id}`,
     payload
+  );
+  return response.data;
+};
+
+export const deleteConsultationNote = async (id) => {
+  const response = await axios.delete(
+    `${DOCTOR_BASE_URL}/api/doctor/consultation-notes/${id}`
   );
   return response.data;
 };

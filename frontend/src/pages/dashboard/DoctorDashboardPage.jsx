@@ -241,7 +241,7 @@ const DoctorDashboardPage = () => {
       title: 'Consultation Notes',
       description: 'Create and manage patient consultation records',
       icon: FileText,
-      link: APP_ROUTES.DOCTOR_APPOINTMENTS,
+      link: APP_ROUTES.DOCTOR_CONSULTATION_NOTES,
       color: 'bg-green-100 text-green-600',
     },
     {
@@ -269,7 +269,7 @@ const DoctorDashboardPage = () => {
       title: 'Consultation Notes',
       description: 'Add notes and prescriptions after appointments',
       icon: FileText,
-      link: APP_ROUTES.DOCTOR_APPOINTMENTS,
+      link: APP_ROUTES.DOCTOR_CONSULTATION_NOTES,
       color: 'bg-emerald-100 text-emerald-600',
     },
   ];
