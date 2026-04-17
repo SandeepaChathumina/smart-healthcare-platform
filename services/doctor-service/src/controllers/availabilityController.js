@@ -341,6 +341,13 @@ exports.updateAvailability = async (req, res) => {
       }
     }
 
+    // These must be calculated BEFORE the validation checks that use them
+    const workingMinutes = totalMinutes - totalBreakMinutes;
+    const workingHours = workingMinutes / 60;
+    const calculatedMaxAppointments = Math.floor(workingHours * 6);
+    const requestedMaxAppointments =
+      maxAppointments !== undefined ? Number(maxAppointments) : availability.maxAppointments;
+
     if (!Number.isFinite(requestedMaxAppointments)) {
       return res.status(400).json({
         message: "maxAppointments must be a valid number",
@@ -363,12 +370,6 @@ exports.updateAvailability = async (req, res) => {
         message: `Maximum appointments cannot be lower than booked appointments (${availability.bookedCount})`,
       });
     }
-    
-    const workingMinutes = totalMinutes - totalBreakMinutes;
-    const workingHours = workingMinutes / 60;
-    const calculatedMaxAppointments = Math.floor(workingHours * 6);
-    const requestedMaxAppointments =
-      maxAppointments !== undefined ? Number(maxAppointments) : availability.maxAppointments;
     
     // Validate breaks
     const requiredBreaks = Math.floor(totalHours / 4);
