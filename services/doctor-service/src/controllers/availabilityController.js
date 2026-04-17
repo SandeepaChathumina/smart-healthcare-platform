@@ -340,10 +340,35 @@ exports.updateAvailability = async (req, res) => {
         }
       }
     }
+
+    if (!Number.isFinite(requestedMaxAppointments)) {
+      return res.status(400).json({
+        message: "maxAppointments must be a valid number",
+      });
+    }
+
+    if (
+      requestedMaxAppointments > calculatedMaxAppointments ||
+      requestedMaxAppointments < 1
+    ) {
+      return res.status(400).json({
+        message: `Maximum appointments must be between 1 and ${calculatedMaxAppointments} for ${workingHours.toFixed(
+          1
+        )} hours working time (6 per hour)`,
+      });
+    }
+
+    if (requestedMaxAppointments < availability.bookedCount) {
+      return res.status(400).json({
+        message: `Maximum appointments cannot be lower than booked appointments (${availability.bookedCount})`,
+      });
+    }
     
     const workingMinutes = totalMinutes - totalBreakMinutes;
     const workingHours = workingMinutes / 60;
     const calculatedMaxAppointments = Math.floor(workingHours * 6);
+    const requestedMaxAppointments =
+      maxAppointments !== undefined ? Number(maxAppointments) : availability.maxAppointments;
     
     // Validate breaks
     const requiredBreaks = Math.floor(totalHours / 4);
@@ -395,7 +420,7 @@ exports.updateAvailability = async (req, res) => {
     if (consultationType) availability.consultationType = consultationType;
     if (isAvailable !== undefined) availability.isAvailable = isAvailable;
     if (breakTime !== undefined) availability.breakTime = breakTime;
-    if (maxAppointments !== undefined) availability.maxAppointments = maxAppointments;
+    if (maxAppointments !== undefined) availability.maxAppointments = requestedMaxAppointments;
 
     await availability.save();
     
@@ -421,17 +446,19 @@ exports.getMyAvailability = async (req, res) => {
       const totalHours = totalMinutes / 60;
       const workingHours = workingMinutes / 60;
       const maxApps = Math.floor(workingHours * 6);
+      const effectiveMaxAppointments = availability.maxAppointments || maxApps || 1;
       const bookedPercentage = availability.bookedCount > 0 
-        ? (availability.bookedCount / availability.maxAppointments) * 100 
+        ? (availability.bookedCount / effectiveMaxAppointments) * 100 
         : 0;
-      const remainingAppointments = availability.maxAppointments - availability.bookedCount;
+      const remainingAppointments = effectiveMaxAppointments - availability.bookedCount;
       
       return {
         ...availability.toObject(),
         metrics: {
           totalHours: totalHours.toFixed(1),
           workingHours: workingHours.toFixed(1),
-          maxAppointments: maxApps,
+          maxAppointments: effectiveMaxAppointments,
+          calculatedMaxAppointments: maxApps,
           breakHours: (breakMinutes / 60).toFixed(1),
           bookedPercentage: bookedPercentage.toFixed(1),
           remainingAppointments: Math.max(0, remainingAppointments),

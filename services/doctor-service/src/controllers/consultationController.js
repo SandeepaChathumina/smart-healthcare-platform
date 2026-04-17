@@ -116,6 +116,47 @@ exports.getMyConsultationNotes = async (req, res) => {
   }
 };
 
+exports.getConsultationNotesByPatient = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    const { page = 1, limit = 20 } = req.query;
+    const userRole = req.user.role;
+    const userId = req.user.id;
+
+    const query = { patientId };
+
+    if (userRole === "Patient" && String(userId) !== String(patientId)) {
+      return res
+        .status(403)
+        .json({ message: "You can only view your own consultation notes" });
+    }
+
+    if (userRole === "Doctor") {
+      query.doctorId = userId;
+    }
+
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+
+    const consultationNotes = await ConsultationNote.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit, 10));
+
+    const total = await ConsultationNote.countDocuments(query);
+
+    return res.status(200).json({
+      success: true,
+      count: consultationNotes.length,
+      total,
+      page: parseInt(page, 10),
+      pages: Math.ceil(total / parseInt(limit, 10)),
+      consultationNotes,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 exports.updateConsultationNote = async (req, res) => {
   try {
     const { id } = req.params;
@@ -149,5 +190,31 @@ exports.updateConsultationNote = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.deleteConsultationNote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const consultationNote = await ConsultationNote.findById(id);
+
+    if (!consultationNote) {
+      return res.status(404).json({ message: "Consultation note not found" });
+    }
+
+    if (String(consultationNote.doctorId) !== String(req.user.id)) {
+      return res
+        .status(403)
+        .json({ message: "You can only delete your own consultation notes" });
+    }
+
+    await ConsultationNote.deleteOne({ _id: id });
+
+    return res.status(200).json({
+      success: true,
+      message: "Consultation note deleted successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };

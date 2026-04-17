@@ -42,10 +42,12 @@ export const APP_ROUTES = {
   PATIENT_MEDICAL_HISTORY: "/patient/medical-history",
   PATIENT_PRESCRIPTIONS: "/patient/prescriptions",
   PATIENT_PRESCRIPTION_DETAILS: "/patient/prescriptions/:id",
+  PATIENT_CONSULTATION_NOTES: "/patient/consultation-notes",
 
   DOCTOR_APPOINTMENTS: "/doctor/appointments",
   DOCTOR_APPOINTMENT_DETAILS: "/doctor/appointments/:id",
   DOCTOR_PRESCRIPTIONS: "/doctor/prescriptions",
+  DOCTOR_CONSULTATION_NOTES: "/doctor/consultation-notes",
 
   // Doctor Availability Routes
   DOCTOR_AVAILABILITY: "/doctor/availability",

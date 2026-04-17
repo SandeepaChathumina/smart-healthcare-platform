@@ -16,6 +16,7 @@ const RESERVED_STATUSES = [
   "confirmed",
   "completed",
 ];
+const isReservedStatus = (status) => RESERVED_STATUSES.includes(String(status || ""));
 
 const normalizeAppointmentType = (value) => {
   if (value === "physical") return "in_person";
@@ -776,6 +777,8 @@ export const updateAppointmentStatus = async (req, res) => {
       nextScheduledDateTime = parsed;
     }
 
+    const previousStatus = appointment.status;
+
     if (["accepted", "awaiting_payment", "rescheduled"].includes(status)) {
       const feeValue = Number(consultationFee ?? appointment.consultationFee);
       if (!Number.isFinite(feeValue) || feeValue <= 0) {
@@ -847,6 +850,21 @@ export const updateAppointmentStatus = async (req, res) => {
     }
 
     await appointment.save();
+
+    // Keep doctor availability booked count in sync with status transitions.
+    // Reserved -> non-reserved should decrement, non-reserved -> reserved should increment.
+    const authToken = req.headers.authorization?.split(" ")[1];
+    if (appointment.availabilityId && authToken) {
+      const wasReserved = isReservedStatus(previousStatus);
+      const isNowReserved = isReservedStatus(appointment.status);
+
+      if (wasReserved && !isNowReserved) {
+        await decrementAvailabilityBookedCount(appointment.availabilityId, authToken);
+      } else if (!wasReserved && isNowReserved) {
+        await incrementAvailabilityBookedCount(appointment.availabilityId, authToken);
+      }
+    }
+
     const [enrichedAppointment] = await enrichAppointments([appointment]);
 
     return res.status(200).json({
@@ -898,13 +916,19 @@ export const cancelAppointment = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
+    const previousStatus = appointment.status;
     appointment.status = "cancelled";
     appointment.cancellationReason =
       cancellationReason || "Appointment cancelled by user";
     await appointment.save();
 
     const authToken = req.headers.authorization?.split(" ")[1];
-    if (appointment.availabilityId && authToken) {
+    if (
+      appointment.availabilityId &&
+      authToken &&
+      isReservedStatus(previousStatus) &&
+      !isReservedStatus(appointment.status)
+    ) {
       await decrementAvailabilityBookedCount(
         appointment.availabilityId,
         authToken,

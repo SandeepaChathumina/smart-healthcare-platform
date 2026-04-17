@@ -95,7 +95,7 @@ const PatientDashboardPage = () => {
       title: 'Consultation Notes',
       description: 'View notes added by your doctor',
       icon: ClipboardList,
-      link: APP_ROUTES.PATIENT_APPOINTMENTS,
+      link: APP_ROUTES.PATIENT_CONSULTATION_NOTES,
       color: 'bg-amber-100 text-amber-600',
     },
     {
